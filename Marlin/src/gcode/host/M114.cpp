@@ -26,6 +26,7 @@
 #include "../../module/motion.h"
 #include "../../module/stepper.h"
 
+
 #if ENABLED(M114_DETAIL)
 
   void report_all_axis_pos(const xyze_pos_t &pos, const uint8_t n=LOGICAL_AXES, const uint8_t precision=3) {
@@ -85,12 +86,13 @@
     SERIAL_EOL();
 
     #if IS_SCARA
-      const xy_float_t deg = {
+      const xyz_float_t deg = {
         planner.get_axis_position_degrees(A_AXIS),
-        planner.get_axis_position_degrees(B_AXIS)
+        planner.get_axis_position_degrees(B_AXIS),
+        planner.get_axis_position_degrees(C_AXIS)
       };
       SERIAL_ECHOPGM("Degrees:");
-      report_all_axis_pos(deg, 2);
+      report_all_axis_pos(deg, 3);
     #endif
 
     SERIAL_ECHOPGM("FromStp:");
@@ -149,6 +151,7 @@ void GcodeSuite::M114() {
 
   TERN_(M114_LEGACY, planner.synchronize());
   report_current_position_projected();
+
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, report_current_grblstate_moving());
 }

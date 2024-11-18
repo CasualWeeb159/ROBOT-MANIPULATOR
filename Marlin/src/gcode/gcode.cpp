@@ -759,9 +759,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
 
       #if HAS_SERVOS
         case 280: M280(); break;                                  // M280: Set servo position absolute
-        #if ENABLED(EDITABLE_SERVO_ANGLES)
-          case 281: M281(); break;                                // M281: Set servo angles
-        #endif
+        // #if ENABLED(EDITABLE_SERVO_ANGLES)
+        //   case 281: M281(); break;                                // M281: Set servo angles
+        // #endif
         #if ENABLED(SERVO_DETACH_GCODE)
           case 282: M282(); break;                                // M282: Detach servo
         #endif

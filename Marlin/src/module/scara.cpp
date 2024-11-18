@@ -37,144 +37,109 @@
   #include "../MarlinCore.h"
 #endif
 
-float segments_per_second = DEFAULT_SEGMENTS_PER_SECOND;
+float add_x;
+float add_y;
+float add_z;
+
+float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_SCARA_SEGMENTS_PER_SECOND);
 
 #if EITHER(MORGAN_SCARA, MP_SCARA)
 
   static constexpr xy_pos_t scara_offset = { SCARA_OFFSET_X, SCARA_OFFSET_Y };
 
-  /**
-   * Morgan SCARA Forward Kinematics. Results in 'cartes'.
-   * Maths and first version by QHARLEY.
-   * Integrated into Marlin and slightly restructured by Joachim Cerny.
-   */
-  void forward_kinematics(const_float_t a, const_float_t b) {
-    const float a_sin = sin(RADIANS(a)) * L1,
-                a_cos = cos(RADIANS(a)) * L1,
-                b_sin = sin(RADIANS(SUM_TERN(MP_SCARA, b, a))) * L2,
-                b_cos = cos(RADIANS(SUM_TERN(MP_SCARA, b, a))) * L2;
+  void forward_kinematics(const_float_t a, const_float_t b, const_float_t c) {
+    const float alfa = RADIANS(a), // prevadime na radiany
+                 beta = M_PI/2 + RADIANS(b), // prevadime na radiany
+                 gama = M_PI/2 + RADIANS(c);
 
-    cartes.x = a_cos + b_cos + scara_offset.x;  // theta
-    cartes.y = a_sin + b_sin + scara_offset.y;  // phi
 
-    /*
-      DEBUG_ECHOLNPGM(
-        "SCARA FK Angle a=", a,
-        " b=", b,
-        " a_sin=", a_sin,
-        " a_cos=", a_cos,
-        " b_sin=", b_sin,
-        " b_cos=", b_cos
-      );
-      DEBUG_ECHOLNPGM(" cartes (X,Y) = "(cartes.x, ", ", cartes.y, ")");
-    //*/
+    cartes.x = cos(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
+    cartes.y = sin(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
+    cartes.z = k1 + sin(beta)*k2 - cos((gama - beta) - (M_PI/2 - beta))*k3 -(lz);
   }
 
 #endif
 
-#if ENABLED(MORGAN_SCARA)
+#if ENABLED(MP_SCARA)
 
   void scara_set_axis_is_at_home(const AxisEnum axis) {
-    if (axis == Z_AXIS)
-      current_position.z = Z_HOME_POS;
-    else {
+    //if (axis == Z_AXIS)
+    //  current_position.z = Z_HOME_POS;
+    //else {
       // MORGAN_SCARA uses a Cartesian XY home position
       xyz_pos_t homeposition = { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
       //DEBUG_ECHOLNPGM_P(PSTR("homeposition X"), homeposition.x, SP_Y_LBL, homeposition.y);
 
       delta = homeposition;
-      forward_kinematics(delta.a, delta.b);
+      forward_kinematics(delta.a, delta.b, delta.c);
       current_position[axis] = cartes[axis];
 
       //DEBUG_ECHOLNPGM_P(PSTR("Cartesian X"), current_position.x, SP_Y_LBL, current_position.y);
       update_software_endstops(axis);
-    }
+    //}
   }
 
-  /**
-   * Morgan SCARA Inverse Kinematics. Results are stored in 'delta'.
-   *
-   * See https://reprap.org/forum/read.php?185,283327
-   *
-   * Maths and first version by QHARLEY.
-   * Integrated into Marlin and slightly restructured by Joachim Cerny.
-   */
   void inverse_kinematics(const xyz_pos_t &raw) {
-    float C2, S2, SK1, SK2, THETA, PSI;
+    float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
-    // Translate SCARA to standard XY with scaling factor
-    const xy_pos_t spos = raw - scara_offset;
+    const xyz_pos_t spos = raw;
 
-    const float H2 = HYPOT2(spos.x, spos.y);
-    if (L1 == L2)
-      C2 = H2 / L1_2_2 - 1;
-    else
-      C2 = (H2 - (L1_2 + L2_2)) / (2.0f * L1 * L2);
+    received_x = spos.x + 0.0001;
+    received_y = spos.y + 0.0001;
+    received_z = spos.z +lz;
+    alfares = atan2(received_y, received_x);
+    d1 = (received_y)/(sin(alfares)) -lx;
+    d2 = sqrt(d1*d1 + (received_z-k1)*(received_z-k1));
+    beta1 = (acos((k2*k2+d2*d2-k3*k3)/(2*k2*d2)));
+    beta2 = (asin((received_z - k1)/(d2)));
+    o1= (acos((k2*k2-d2*d2+k3*k3)/(2*k2*k3)));
 
-    LIMIT(C2, -1, 1);
+    alfa = alfares*(180/M_PI);
+    beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
+    gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
 
-    S2 = SQRT(1.0f - sq(C2));
-
-    // Unrotated Arm1 plus rotated Arm2 gives the distance from Center to End
-    SK1 = L1 + L2 * C2;
-
-    // Rotated Arm2 gives the distance from Arm1 to Arm2
-    SK2 = L2 * S2;
-
-    // Angle of Arm1 is the difference between Center-to-End angle and the Center-to-Elbow
-    THETA = ATAN2(SK1, SK2) - ATAN2(spos.x, spos.y);
-
-    // Angle of Arm2
-    PSI = ATAN2(S2, C2);
-
-    delta.set(DEGREES(THETA), DEGREES(SUM_TERN(MORGAN_SCARA, PSI, THETA)), raw.z);
-
-    /*
-      DEBUG_POS("SCARA IK", raw);
-      DEBUG_POS("SCARA IK", delta);
-      DEBUG_ECHOLNPGM("  SCARA (x,y) ", sx, ",", sy, " C2=", C2, " S2=", S2, " Theta=", THETA, " Psi=", PSI);
-    //*/
+    delta.set(alfa, beta, gamma);
   }
 
 #elif ENABLED(MP_SCARA)
 
-  void scara_set_axis_is_at_home(const AxisEnum axis) {
-    if (axis == Z_AXIS)
-      current_position.z = Z_HOME_POS;
-    else {
+  //void scara_set_axis_is_at_home(const AxisEnum axis) {
+    //if (axis == Z_AXIS)
+    //  current_position.z = Z_HOME_POS;
+    //else {
       // MP_SCARA uses arm angles for AB home position
-      #ifndef SCARA_OFFSET_THETA1
-        #define SCARA_OFFSET_THETA1  12 // degrees
-      #endif
-      #ifndef SCARA_OFFSET_THETA2
-        #define SCARA_OFFSET_THETA2 131 // degrees
-      #endif
-      ab_float_t homeposition = { SCARA_OFFSET_THETA1, SCARA_OFFSET_THETA2 };
+     // #ifndef SCARA_OFFSET_THETA1
+     //   #define SCARA_OFFSET_THETA1  12 // degrees
+      //#endif
+      //#ifndef SCARA_OFFSET_THETA2
+      //  #define SCARA_OFFSET_THETA2 131 // degrees
+      //#endif
+     // ab_float_t homeposition = { SCARA_OFFSET_THETA1, SCARA_OFFSET_THETA2 };
       //DEBUG_ECHOLNPGM("homeposition A:", homeposition.a, " B:", homeposition.b);
 
-      inverse_kinematics(homeposition);
-      forward_kinematics(delta.a, delta.b);
-      current_position[axis] = cartes[axis];
+      //inverse_kinematics(homeposition);
+      //forward_kinematics(delta.a, delta.b);
+      //current_position[axis] = cartes[axis];
 
       //DEBUG_ECHOLNPGM_P(PSTR("Cartesian X"), current_position.x, SP_Y_LBL, current_position.y);
-      update_software_endstops(axis);
-    }
-  }
+      //update_software_endstops(axis);
+    //}
+  //}
 
-  void inverse_kinematics(const xyz_pos_t &raw) {
-    const float x = raw.x, y = raw.y, c = HYPOT(x, y),
-                THETA3 = ATAN2(y, x),
-                THETA1 = THETA3 + ACOS((sq(c) + sq(L1) - sq(L2)) / (2.0f * c * L1)),
-                THETA2 = THETA3 - ACOS((sq(c) + sq(L2) - sq(L1)) / (2.0f * c * L2));
+  //void inverse_kinematics(const xyz_pos_t &raw) {
+   // const float x = raw.x, y = raw.y, c = HYPOT(x, y),
+    //            THETA3 = ATAN2(y, x),
+    //            THETA1 = THETA3 + ACOS((sq(c) + sq(L1) - sq(L2)) / (2.0f * c * L1)),
+      //          THETA2 = THETA3 - ACOS((sq(c) + sq(L2) - sq(L1)) / (2.0f * c * L2));
 
-    delta.set(DEGREES(THETA1), DEGREES(THETA2), raw.z);
+   // delta.set(DEGREES(THETA1), DEGREES(THETA2), raw.z);
 
     /*
       DEBUG_POS("SCARA IK", raw);
       DEBUG_POS("SCARA IK", delta);
       SERIAL_ECHOLNPGM("  SCARA (x,y) ", x, ",", y," Theta1=", THETA1, " Theta2=", THETA2);
     //*/
-  }
+ // }
 
 #elif ENABLED(AXEL_TPARA)
 
@@ -295,12 +260,13 @@ float segments_per_second = DEFAULT_SEGMENTS_PER_SECOND;
 #endif
 
 void scara_report_positions() {
-  SERIAL_ECHOLNPGM("SCARA Theta:", planner.get_axis_position_degrees(A_AXIS)
+  SERIAL_ECHOLNPGM(" a:", planner.get_axis_position_degrees(A_AXIS)
     #if ENABLED(AXEL_TPARA)
       , "  Phi:", planner.get_axis_position_degrees(B_AXIS)
       , "  Psi:", planner.get_axis_position_degrees(C_AXIS)
     #else
-      , "  Psi" TERN_(MORGAN_SCARA, "+Theta") ":", planner.get_axis_position_degrees(B_AXIS)
+      , " b:", planner.get_axis_position_degrees(B_AXIS)
+      , " g:", planner.get_axis_position_degrees(C_AXIS)
     #endif
   );
   SERIAL_EOL();

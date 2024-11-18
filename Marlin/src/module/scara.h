@@ -28,6 +28,10 @@
 #include "../core/macros.h"
 
 extern float segments_per_second;
+extern float add_x;
+extern float add_y;
+extern float add_z;
+
 
 #if ENABLED(AXEL_TPARA)
 
@@ -40,11 +44,14 @@ extern float segments_per_second;
 
 #else
 
-  float constexpr L1 = SCARA_LINKAGE_1, L2 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
-                  L1_2 = sq(float(L1)), L1_2_2 = 2.0 * L1_2,
-                  L2_2 = sq(float(L2));
+  float constexpr  k2 = SCARA_LINKAGE_1, k3 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
+                   k1 = SCARA_LINKAGE_3, L31 = SCARA_OFFSET_TOOL,
+                   lx = 139.5, ly = 0,
+                   lz = 129.43,
+                   L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
+                   L2_2 = sq(float(k2));
 
-  void forward_kinematics(const_float_t a, const_float_t b);
+  void forward_kinematics(const_float_t a, const_float_t b, const_float_t c);
 
 #endif
 

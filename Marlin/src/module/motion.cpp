@@ -237,6 +237,7 @@ void report_current_position() {
  */
 void report_current_position_projected() {
   report_logical_position(current_position);
+  scara_report_positions();
   stepper.report_a_position(planner.position);
 }
 
@@ -324,7 +325,7 @@ void report_current_position_projected() {
 
       const float R2 = HYPOT2(rx - SCARA_OFFSET_X, ry - SCARA_OFFSET_Y);
       can_reach = (
-        R2 <= sq(L1 + L2) - inset
+        R2 <= sq(450 + 435) - inset
         #if MIDDLE_DEAD_ZONE_R > 0
           && R2 >= sq(float(MIDDLE_DEAD_ZONE_R))
         #endif
@@ -422,10 +423,8 @@ void get_cartesian_from_steppers() {
     forward_kinematics(planner.get_axis_positions_mm());
   #elif IS_SCARA
     forward_kinematics(
-      planner.get_axis_position_degrees(A_AXIS), planner.get_axis_position_degrees(B_AXIS)
-      OPTARG(AXEL_TPARA, planner.get_axis_position_degrees(C_AXIS))
+      planner.get_axis_position_degrees(A_AXIS), planner.get_axis_position_degrees(B_AXIS), planner.get_axis_position_degrees(C_AXIS)
     );
-    cartes.z = planner.get_axis_position_mm(Z_AXIS);
   #else
     NUM_AXIS_CODE(
       cartes.x = planner.get_axis_position_mm(X_AXIS),
