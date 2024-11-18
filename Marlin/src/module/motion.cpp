@@ -94,6 +94,9 @@ xyze_pos_t current_position = LOGICAL_AXIS_ARRAY(0, X_HOME_POS, Y_HOME_POS, Z_IN
  */
 xyze_pos_t destination; // {0}
 
+//selhal kinematický výpočet?
+bool kinematic_calc_failiure = false;
+
 // G60/G61 Position Save and Return
 #if SAVED_POSITIONS
   uint8_t saved_slots[(SAVED_POSITIONS + 7) >> 3];
@@ -237,8 +240,8 @@ void report_current_position() {
  */
 void report_current_position_projected() {
   report_logical_position(current_position);
-  scara_report_positions();
-  stepper.report_a_position(planner.position);
+  //scara_report_positions();
+  //stepper.report_a_position(planner.position);
 }
 
 #if ENABLED(AUTO_REPORT_POSITION)
@@ -498,6 +501,10 @@ void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/) {
 
       planner.buffer_line(destination, scaled_fr_mm_s);
     #endif
+    if (kinematic_calc_failiure == true){
+      kinematic_calc_failiure = false;
+      return;
+    }
 
     current_position = destination;
   }

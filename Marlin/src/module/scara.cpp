@@ -41,6 +41,9 @@ float add_x;
 float add_y;
 float add_z;
 
+extern xyze_pos_t current_position;
+extern bool kinematic_calc_failiure;
+
 float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_SCARA_SEGMENTS_PER_SECOND);
 
 #if EITHER(MORGAN_SCARA, MP_SCARA)
@@ -54,7 +57,7 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
 
 
     cartes.x = cos(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
-    cartes.y = sin(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
+    cartes.y = -sin(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
     cartes.z = k1 + sin(beta)*k2 - cos((gama - beta) - (M_PI/2 - beta))*k3 -(lz);
   }
 
@@ -87,8 +90,12 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
     received_z = spos.z +lz;
-    alfares = atan2(received_y, received_x);
-    d1 = (received_y)/(sin(alfares)) -lx;
+
+    SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
+    SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
+
+    alfares = atan2(-received_y, received_x);
+    d1 = (-received_y)/(sin(alfares)) -lx;
     d2 = sqrt(d1*d1 + (received_z-k1)*(received_z-k1));
     beta1 = (acos((k2*k2+d2*d2-k3*k3)/(2*k2*d2)));
     beta2 = (asin((received_z - k1)/(d2)));
@@ -97,8 +104,18 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     alfa = alfares*(180/M_PI);
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
+    SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
 
+    // Kontrola na imaginární části pro alfa, beta, gamma
+    if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)) {
+        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
+        //inverse_kinematics(current_position);
+        kinematic_calc_failiure = true;
+        SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
+    } else{
     delta.set(alfa, beta, gamma);
+  }
+
   }
 
 #elif ENABLED(MP_SCARA)
