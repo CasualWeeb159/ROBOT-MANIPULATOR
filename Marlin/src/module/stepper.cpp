@@ -1903,12 +1903,16 @@ void Stepper::pulse_phase_isr() {
 
     // Pulse start
     #if HAS_X_STEP
+      //SEM BYCH DAL VYPNUTÍ BRZDY
+      SERIAL_ECHOLNPGM("brzda pro X vypnuta");
       PULSE_START(X);
     #endif
     #if HAS_Y_STEP
+      //SEM BYCH DAL VYPNUTÍ BRZDY
       PULSE_START(Y);
     #endif
     #if HAS_Z_STEP
+      //SEM BYCH DAL VYPNUTÍ BRZDY
       PULSE_START(Z);
     #endif
     #if HAS_I_STEP
@@ -1950,12 +1954,16 @@ void Stepper::pulse_phase_isr() {
     // Pulse stop
     #if HAS_X_STEP
       PULSE_STOP(X);
+      SERIAL_ECHOLNPGM("brzda pro X zapnuta");
+      //SEM BYCH DAL ZAPNUTÍ BRZDY
     #endif
     #if HAS_Y_STEP
       PULSE_STOP(Y);
+      //SEM BYCH DAL ZAPNUTÍ BRZDY
     #endif
     #if HAS_Z_STEP
       PULSE_STOP(Z);
+      //SEM BYCH DAL ZAPNUTÍ BRZDY
     #endif
     #if HAS_I_STEP
       PULSE_STOP(I);
