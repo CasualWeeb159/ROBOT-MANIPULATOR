@@ -410,8 +410,7 @@ inline void manage_inactivity(const bool no_stepper_sleep=false) {
   const millis_t ms = millis();
 
   // Prevent steppers timing-out
-  const bool do_reset_timeout = no_stepper_sleep
-                               || TERN0(PAUSE_PARK_NO_STEPPER_TIMEOUT, did_pause_print);
+  const bool do_reset_timeout = no_stepper_sleep || TERN0(PAUSE_PARK_NO_STEPPER_TIMEOUT, did_pause_print);
 
   // Reset both the M18/M84 activity timeout and the M85 max 'kill' timeout
   if (do_reset_timeout) gcode.reset_stepper_timeout(ms);
@@ -438,8 +437,11 @@ inline void manage_inactivity(const bool no_stepper_sleep=false) {
 
           // Individual axes will be disabled if configured
           TERN_(DISABLE_INACTIVE_X, stepper.disable_axis(X_AXIS));
+          SERIAL_ECHOLNPGM("DISABLE_INACTIVE_X__MarlinCore.cpp__441");
           TERN_(DISABLE_INACTIVE_Y, stepper.disable_axis(Y_AXIS));
+          SERIAL_ECHOLNPGM("DISABLE_INACTIVE_Y__MarlinCore.cpp__443");
           TERN_(DISABLE_INACTIVE_Z, stepper.disable_axis(Z_AXIS));
+          SERIAL_ECHOLNPGM("DISABLE_INACTIVE_Y__MarlinCore.cpp__445");
           TERN_(DISABLE_INACTIVE_I, stepper.disable_axis(I_AXIS));
           TERN_(DISABLE_INACTIVE_J, stepper.disable_axis(J_AXIS));
           TERN_(DISABLE_INACTIVE_K, stepper.disable_axis(K_AXIS));
