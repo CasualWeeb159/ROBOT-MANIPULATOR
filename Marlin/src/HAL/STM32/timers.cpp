@@ -175,6 +175,7 @@ void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
 
 void HAL_timer_enable_interrupt(const uint8_t timer_num) {
   if (HAL_timer_initialized(timer_num) && !timer_instance[timer_num]->hasInterrupt()) {
+    SERIAL_ECHOLNPGM("wake_up__timers.cpp");
     switch (timer_num) {
       case MF_TIMER_STEP:
         timer_instance[timer_num]->attachInterrupt(Step_Handler);
@@ -187,7 +188,10 @@ void HAL_timer_enable_interrupt(const uint8_t timer_num) {
 }
 
 void HAL_timer_disable_interrupt(const uint8_t timer_num) {
-  if (HAL_timer_initialized(timer_num)) timer_instance[timer_num]->detachInterrupt();
+  if (HAL_timer_initialized(timer_num)) {
+    timer_instance[timer_num]->detachInterrupt();
+    SERIAL_ECHOLNPGM("suspend__timers.cpp");
+  };
 }
 
 bool HAL_timer_interrupt_enabled(const uint8_t timer_num) {
