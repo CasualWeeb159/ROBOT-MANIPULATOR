@@ -497,6 +497,8 @@ private:
     static void G6();
   #endif
 
+  static void G7();
+
   #if ENABLED(FWRETRACT)
     static void G10();
     static void G11();

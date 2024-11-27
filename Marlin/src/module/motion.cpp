@@ -2394,3 +2394,20 @@ void set_axis_is_at_home(const AxisEnum axis) {
     update_workspace_offset(axis);
   }
 #endif
+
+void direct_angle_change(const abc_pos_t &angles){
+  const float alfa = angles.a,
+              beta = angles.b,
+              gamma = angles.c;
+  switch (is_movement_possible(alfa, beta, gamma)){
+    case -1: case -2:{
+      SERIAL_ECHOLNPGM("Movement not possible");
+      break;
+    }
+    case 1:{
+      forward_kinematics(alfa, beta, gamma);
+      destination = cartes;
+      prepare_fast_move_to_destination;
+    }
+  }
+}

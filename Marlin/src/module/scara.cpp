@@ -52,8 +52,8 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
 
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c) {
     const float alfa = RADIANS(a), // prevadime na radiany
-                 beta = M_PI/2 + RADIANS(b), // prevadime na radiany
-                 gama = M_PI/2 + RADIANS(c);
+                beta = M_PI/2 + RADIANS(b), // prevadime na radiany
+                gama = M_PI/2 + RADIANS(c);
 
 
     cartes.x = cos(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
@@ -62,6 +62,27 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
   }
 
 #endif
+
+int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
+  const float alfa = a,
+              beta = b,
+              gamma = c;
+  const int alfa_min = -175,
+            alfa_max = 175,
+            beta_min = -80,
+            beta_max = 60,
+            gamma_min = 0,
+            gamma_max = 115;
+  // Kontrola na imaginární části pro alfa, beta, gamma
+  if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)){
+      return -1;
+  }
+  // Kontrola na rozsah pro alfa, beta, gamma
+  if (alfa < alfa_min || alfa > alfa_max || beta < beta_min || beta > beta_max || gamma < gamma_min || gamma > gamma_max){
+    return -2;
+  }
+  return 1;
+}
 
 #if ENABLED(MP_SCARA)
 
@@ -105,17 +126,19 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
     //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
-
-    // Kontrola na imaginární části pro alfa, beta, gamma
-    if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)) {
+    switch(is_movement_possible(alfa,beta,gamma)){
+      case 1:
         SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
-        //inverse_kinematics(current_position);
+        delta.set(alfa, beta, gamma);
+        break;
+      case -1:
         kinematic_calc_failiure = true;
-        //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
-    } else{
-    delta.set(alfa, beta, gamma);
-  }
-
+        break;
+      case -2:
+        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů je mimo rozsah. Program bude ukončen.");
+        kinematic_calc_failiure = true;
+        break;
+    }
   }
 
 #elif ENABLED(MP_SCARA)

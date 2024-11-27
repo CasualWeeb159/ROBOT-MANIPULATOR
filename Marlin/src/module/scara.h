@@ -58,3 +58,4 @@ extern float add_z;
 void inverse_kinematics(const xyz_pos_t &raw);
 void scara_set_axis_is_at_home(const AxisEnum axis);
 void scara_report_positions();
+int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c);
