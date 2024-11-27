@@ -91,8 +91,8 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     received_y = spos.y + 0.0001;
     received_z = spos.z +lz;
 
-    SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
-    SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
+    //SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
+    //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
 
     alfares = atan2(-received_y, received_x);
     d1 = (-received_y)/(sin(alfares)) -lx;
@@ -104,14 +104,14 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     alfa = alfares*(180/M_PI);
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
-    SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
+    //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
 
     // Kontrola na imaginární části pro alfa, beta, gamma
     if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)) {
         SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
         //inverse_kinematics(current_position);
         kinematic_calc_failiure = true;
-        SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
+        //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
     } else{
     delta.set(alfa, beta, gamma);
   }
