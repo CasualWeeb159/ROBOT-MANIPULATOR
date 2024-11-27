@@ -612,7 +612,7 @@ class Stepper {
     // The stepper subsystem goes to sleep when it runs out of things to execute.
     // Call this to notify the subsystem that it is time to go to work.
     static void wake_up() { 
-      SERIAL_ECHOLNPGM("wake_up");
+      SERIAL_ECHOLNPGM("wake_up__stepper.h");
       ENABLE_STEPPER_DRIVER_INTERRUPT(); }
 
     static bool is_awake() { return STEPPER_ISR_ENABLED(); }
@@ -620,8 +620,8 @@ class Stepper {
     static bool suspend() {
       const bool awake = is_awake();
       if (awake) {
-        DISABLE_STEPPER_DRIVER_INTERRUPT()
-        SERIAL_ECHOLNPGM("suspend");
+        DISABLE_STEPPER_DRIVER_INTERRUPT();
+        SERIAL_ECHOLNPGM("suspend__stepper.h");
       };
       return awake;
     }
