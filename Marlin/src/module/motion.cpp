@@ -207,6 +207,7 @@ inline void report_logical_position(const xyze_pos_t &rpos) {
       , SP_E_LBL, lpos.e
     #endif
   );
+  SERIAL_ECHOLNPGM("Robot angles set to A:", delta.a, " B:", delta.b, " C:", delta.c);
 }
 
 // Report the real current position according to the steppers.
@@ -240,6 +241,7 @@ void report_current_position() {
  */
 void report_current_position_projected() {
   report_logical_position(current_position);
+
   //scara_report_positions();
   //stepper.report_a_position(planner.position);
 }
@@ -2399,15 +2401,19 @@ void direct_angle_change(const abc_pos_t &angles){
   const float alfa = angles.a,
               beta = angles.b,
               gamma = angles.c;
+  
   switch (is_movement_possible(alfa, beta, gamma)){
-    case -1: case -2:{
-      SERIAL_ECHOLNPGM("Movement not possible");
-      break;
-    }
+    case -1:
+        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
+        break;
+    case -2:
+        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů je mimo rozsah. Program bude ukončen.");
+        break;
     case 1:{
+      //SERIAL_ECHOLNPGM("Úhly prošli kontrolou");
       forward_kinematics(alfa, beta, gamma);
       destination = cartes;
-      prepare_fast_move_to_destination;
+      prepare_fast_move_to_destination();
     }
   }
 }

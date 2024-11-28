@@ -78,7 +78,7 @@ int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
       return -1;
   }
   // Kontrola na rozsah pro alfa, beta, gamma
-  if (alfa < alfa_min || alfa > alfa_max || beta < beta_min || beta > beta_max || gamma < gamma_min || gamma > gamma_max){
+  if (!WITHIN(alfa,alfa_min,alfa_max)||!WITHIN(beta,beta_min,beta_max)||!WITHIN(gamma,gamma_min,gamma_max)){
     return -2;
   }
   return 1;
@@ -128,10 +128,10 @@ int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
     //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
     switch(is_movement_possible(alfa,beta,gamma)){
       case 1:
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
         delta.set(alfa, beta, gamma);
         break;
       case -1:
+        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
         kinematic_calc_failiure = true;
         break;
       case -2:
