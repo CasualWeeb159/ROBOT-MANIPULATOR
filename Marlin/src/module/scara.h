@@ -51,6 +51,23 @@ extern float add_z;
                    L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
                    L2_2 = sq(float(k2));
 
+  float constexpr alfa_min = -179.99,
+                  alfa_max = 180,
+                  beta_min = -80,
+                  beta_max = 40,
+                  gamma_min = 0,
+                  gamma_max = 115,
+
+                  theta1_min = 20,
+                  theta1_max = 160,
+                  
+                  // r < (z-q)/k
+                  k = -0.75,
+                  q = 642;
+
+  const int       r_min = 335,
+                  r_max = 1200;
+
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c);
 
 #endif
@@ -58,4 +75,5 @@ extern float add_z;
 void inverse_kinematics(const xyz_pos_t &raw);
 void scara_set_axis_is_at_home(const AxisEnum axis);
 void scara_report_positions();
-int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c);
+bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c);
+//bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_float_t &z);

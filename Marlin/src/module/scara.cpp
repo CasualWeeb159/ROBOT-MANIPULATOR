@@ -55,7 +55,6 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
                 beta = M_PI/2 + RADIANS(b), // prevadime na radiany
                 gama = M_PI/2 + RADIANS(c);
 
-
     cartes.x = cos(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
     cartes.y = -sin(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
     cartes.z = k1 + sin(beta)*k2 - cos((gama - beta) - (M_PI/2 - beta))*k3 -(lz);
@@ -63,26 +62,37 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
 
 #endif
 
-int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
+bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c){
   const float alfa = a,
               beta = b,
               gamma = c;
-  const int alfa_min = -175,
-            alfa_max = 175,
-            beta_min = -80,
-            beta_max = 60,
-            gamma_min = 0,
-            gamma_max = 115;
+
   // Kontrola na imaginární části pro alfa, beta, gamma
   if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)){
-      return -1;
+    return false;
   }
   // Kontrola na rozsah pro alfa, beta, gamma
   if (!WITHIN(alfa,alfa_min,alfa_max)||!WITHIN(beta,beta_min,beta_max)||!WITHIN(gamma,gamma_min,gamma_max)){
-    return -2;
+    return false;
   }
-  return 1;
+  if (gamma - beta > theta1_min || gamma - beta < theta1_max) {
+    return false;
+  }
+  return true;
 }
+
+
+bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_float_t &z){
+
+  float r = HYPOT(x, y);
+
+  if (r < r_min || r > r_max || r < (z-q)/k) {
+    return false;
+  }
+
+  return true;
+}
+
 
 #if ENABLED(MP_SCARA)
 
@@ -107,10 +117,15 @@ int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
     const xyz_pos_t spos = raw;
+    if (!are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
+      kinematic_calc_failiure = true;
+      SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
+      return;
+    }
 
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
-    received_z = spos.z +lz;
+    received_z = spos.z + lz;
 
     //SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
     //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
@@ -126,19 +141,13 @@ int is_movement_possible(const_float_t &a, const_float_t &b, const_float_t &c){
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
     //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
-    switch(is_movement_possible(alfa,beta,gamma)){
-      case 1:
-        delta.set(alfa, beta, gamma);
-        break;
-      case -1:
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
-        kinematic_calc_failiure = true;
-        break;
-      case -2:
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů je mimo rozsah. Program bude ukončen.");
-        kinematic_calc_failiure = true;
-        break;
+
+    if (!are_angles_possible(alfa,beta,gamma)){
+      kinematic_calc_failiure = true;
+      SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
+      return;
     }
+    delta.set(alfa, beta, gamma);
   }
 
 #elif ENABLED(MP_SCARA)

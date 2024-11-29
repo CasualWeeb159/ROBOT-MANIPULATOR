@@ -2402,18 +2402,13 @@ void direct_angle_change(const abc_pos_t &angles){
               beta = angles.b,
               gamma = angles.c;
   
-  switch (is_movement_possible(alfa, beta, gamma)){
-    case -1:
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
-        break;
-    case -2:
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů je mimo rozsah. Program bude ukončen.");
-        break;
-    case 1:{
-      //SERIAL_ECHOLNPGM("Úhly prošli kontrolou");
-      forward_kinematics(alfa, beta, gamma);
-      destination = cartes;
-      prepare_fast_move_to_destination();
-    }
+  if (!are_angles_possible(alfa,beta,gamma)){
+    SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
+    return;
   }
+  //SERIAL_ECHOLNPGM("Úhly prošli kontrolou");
+  forward_kinematics(alfa, beta, gamma);
+  destination = cartes;
+  prepare_fast_move_to_destination();
 }
+
