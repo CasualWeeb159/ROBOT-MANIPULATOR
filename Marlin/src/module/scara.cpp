@@ -69,13 +69,16 @@ bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c){
 
   // Kontrola na imaginární části pro alfa, beta, gamma
   if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)){
+    SERIAL_ECHOLNPGM("Je nan");
     return false;
   }
   // Kontrola na rozsah pro alfa, beta, gamma
   if (!WITHIN(alfa,alfa_min,alfa_max)||!WITHIN(beta,beta_min,beta_max)||!WITHIN(gamma,gamma_min,gamma_max)){
+    SERIAL_ECHOLNPGM("Uhel mimo rozsah");
     return false;
   }
-  if (gamma - beta > theta1_min || gamma - beta < theta1_max) {
+  if (!(gamma - beta > theta1_min) || !(gamma - beta < theta1_max)) {
+    SERIAL_ECHOLNPGM("Theha mimo rozsah");
     return false;
   }
   return true;
@@ -87,6 +90,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
   float r = HYPOT(x, y);
 
   if (r < r_min || r > r_max || r < (z-q)/k) {
+    SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
     return false;
   }
 
@@ -119,7 +123,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     const xyz_pos_t spos = raw;
     if (!are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
       kinematic_calc_failiure = true;
-      SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
+      SERIAL_ECHOLNPGM("Chyba: Souřadnice je mimo povolený rozsah robota.");
       return;
     }
 
@@ -144,7 +148,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
 
     if (!are_angles_possible(alfa,beta,gamma)){
       kinematic_calc_failiure = true;
-      SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
+      SERIAL_ECHOLNPGM("Chyba: Úhel je mimo povolený rozsah robota.");
       return;
     }
     delta.set(alfa, beta, gamma);
