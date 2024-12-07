@@ -90,7 +90,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
   float r = HYPOT(x, y);
 
   if (r < r_min || r > r_max || r < (z-q)/k) {
-    SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
+    //SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
     return false;
   }
 
@@ -117,11 +117,16 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     //}
   }
 
-  void inverse_kinematics(const xyz_pos_t &raw) {
+  void inverse_kinematics(
+    const xyz_pos_t &raw,
+    bool is_only_a_question,
+    bool already_checked)
+    {
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
     const xyz_pos_t spos = raw;
-    if (!are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
+
+    if (!already_checked && !are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
       kinematic_calc_failiure = true;
       SERIAL_ECHOLNPGM("Chyba: Souřadnice je mimo povolený rozsah robota.");
       return;
@@ -146,11 +151,16 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
     //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
 
-    if (!are_angles_possible(alfa,beta,gamma)){
+    if (!already_checked && !are_angles_possible(alfa,beta,gamma)){
       kinematic_calc_failiure = true;
       SERIAL_ECHOLNPGM("Chyba: Úhel je mimo povolený rozsah robota.");
       return;
     }
+
+    if (is_only_a_question){
+      return;
+    }
+    
     delta.set(alfa, beta, gamma);
   }
 

@@ -117,7 +117,7 @@
 Planner planner;
 
 // public:
-
+extern bool kinematic_calc_failiure;
 /**
  * A ring buffer of moves described in steps
  */
@@ -3152,11 +3152,17 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
         cart.u - position_cart.u, cart.v - position_cart.v, cart.w - position_cart.w
       );
     #endif
-
-    // Cartesian XYZ to kinematic ABC, stored in global 'delta'
-    inverse_kinematics(machine);
-
     PlannerHints ph = hints;
+    // Cartesian XYZ to kinematic ABC, stored in global 'delta'
+    inverse_kinematics(machine, false, ph.movement_possibility_already_checked);
+
+    if (kinematic_calc_failiure == true){
+      kinematic_calc_failiure = false;
+      SERIAL_ECHOLNPGM("Zabráněno nemožnému pohybu v planner.cpp buffer_line()");
+      return false;
+    }
+
+    
     if (!hints.millimeters)
       ph.millimeters = (cart_dist_mm.x || cart_dist_mm.y)
         ? xyz_pos_t(cart_dist_mm).magnitude()

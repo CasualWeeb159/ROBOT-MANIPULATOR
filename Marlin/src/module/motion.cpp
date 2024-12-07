@@ -330,7 +330,7 @@ void report_current_position_projected() {
 
       const float R2 = HYPOT2(rx - SCARA_OFFSET_X, ry - SCARA_OFFSET_Y);
       can_reach = (
-        R2 <= sq(450 + 435) - inset
+        R2 <= sq(1200) - inset
         #if MIDDLE_DEAD_ZONE_R > 0
           && R2 >= sq(float(MIDDLE_DEAD_ZONE_R))
         #endif
@@ -501,13 +501,14 @@ void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/) {
     #else
       if (current_position == destination) return;
 
-      planner.buffer_line(destination, scaled_fr_mm_s);
+      if (!planner.buffer_line(destination, scaled_fr_mm_s)) return;
     #endif
+    /*
     if (kinematic_calc_failiure == true){
       kinematic_calc_failiure = false;
       return;
     }
-
+    */
     current_position = destination;
   }
 
@@ -1087,14 +1088,21 @@ FORCE_INLINE void segment_idle(millis_t &next_idle_ms) {
 
     const xyze_float_t diff = destination - current_position;
 
-    // If the move is only in Z/E don't split up the move
-    if (!diff.x && !diff.y) {
+    // If the move is only in E don't split up the move
+    if (!diff.x && !diff.y && !diff.z) {
       planner.buffer_line(destination, scaled_fr_mm_s);
       return false; // caller will update current_position
     }
 
     // Fail if attempting move outside printable radius
-    if (!position_is_reachable(destination)) return true;
+    //if (!position_is_reachable(destination)) return true;
+
+    inverse_kinematics(destination, true);
+    if (kinematic_calc_failiure) {
+      kinematic_calc_failiure = false;
+      SERIAL_ECHOLNPGM("Segmentovaný pohyb zastaven v motion.ccp line_to_destination_kinematic()");
+      return true;
+    }
 
     // Get the linear distance in XYZ
     float cartesian_mm = xyz_float_t(diff).magnitude();
@@ -1127,6 +1135,7 @@ FORCE_INLINE void segment_idle(millis_t &next_idle_ms) {
     // Add hints to help optimize the move
     PlannerHints hints(cartesian_mm * inv_segments);
     TERN_(SCARA_FEEDRATE_SCALING, hints.inv_duration = scaled_fr_mm_s / hints.millimeters);
+    hints.movement_possibility_already_checked = true;
 
     /*
     SERIAL_ECHOPGM("mm=", cartesian_mm);
@@ -1401,7 +1410,7 @@ FORCE_INLINE void segment_idle(millis_t &next_idle_ms) {
  * Before exit, current_position is set to destination.
  */
 void prepare_line_to_destination() {
-  apply_motion_limits(destination);
+  //apply_motion_limits(destination);
 
   #if EITHER(PREVENT_COLD_EXTRUSION, PREVENT_LENGTHY_EXTRUDE)
 
