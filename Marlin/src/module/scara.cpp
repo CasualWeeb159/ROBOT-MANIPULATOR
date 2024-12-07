@@ -69,16 +69,16 @@ bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c){
 
   // Kontrola na imaginární části pro alfa, beta, gamma
   if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)){
-    SERIAL_ECHOLNPGM("Je nan");
+    //SERIAL_ECHOLNPGM("Je nan");
     return false;
   }
   // Kontrola na rozsah pro alfa, beta, gamma
   if (!WITHIN(alfa,alfa_min,alfa_max)||!WITHIN(beta,beta_min,beta_max)||!WITHIN(gamma,gamma_min,gamma_max)){
-    SERIAL_ECHOLNPGM("Uhel mimo rozsah");
+    //SERIAL_ECHOLNPGM("Uhel mimo rozsah");
     return false;
   }
   if (!(gamma - beta > theta1_min) || !(gamma - beta < theta1_max)) {
-    SERIAL_ECHOLNPGM("Theha mimo rozsah");
+    //SERIAL_ECHOLNPGM("Theha mimo rozsah");
     return false;
   }
   return true;
