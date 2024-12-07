@@ -89,7 +89,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
 
   float r = HYPOT(x, y);
 
-  if (r < r_min || r > r_max || r < (z-q)/k) {
+  if (r < r_min || r < (z-q)/k) {
     SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
     return false;
   }
