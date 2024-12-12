@@ -3,7 +3,7 @@
 
 abc_pos_t robot_angles;
 void GcodeSuite::G7() {
-    inverse_kinematics(current_position);
+    //inverse_kinematics(current_position);
     robot_angles.a = delta.a;
     robot_angles.b = delta.b;
     robot_angles.c = delta.c;

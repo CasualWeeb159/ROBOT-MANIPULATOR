@@ -2406,6 +2406,7 @@ void direct_angle_change(const abc_pos_t &angles){
     SERIAL_ECHOLNPGM("Chyba: Cíl je mimo povolený rozsah robota.");
     return;
   }
+  
   //SERIAL_ECHOLNPGM("Úhly prošli kontrolou");
   forward_kinematics(alfa, beta, gamma);
   destination = cartes;

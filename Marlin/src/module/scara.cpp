@@ -120,13 +120,14 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
   void inverse_kinematics(const xyz_pos_t &raw) {
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
+    
     const xyz_pos_t spos = raw;
     if (!are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
       kinematic_calc_failiure = true;
       SERIAL_ECHOLNPGM("Chyba: Souřadnice je mimo povolený rozsah robota.");
       return;
     }
-
+    
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
     received_z = spos.z + lz;
@@ -145,12 +146,13 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
     //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
-
+    
     if (!are_angles_possible(alfa,beta,gamma)){
       kinematic_calc_failiure = true;
       SERIAL_ECHOLNPGM("Chyba: Úhel je mimo povolený rozsah robota.");
       return;
     }
+    
     delta.set(alfa, beta, gamma);
   }
 

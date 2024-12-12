@@ -53,13 +53,13 @@ extern float add_z;
 
                     alfa_min = -179.99,
                     alfa_max = 180,
-                    beta_min = -80,
+                    beta_min = -90,
                     beta_max = 45,
                     gamma_min = -20,
                     gamma_max = 115,
 
                     theta1_min = 5,
-                    theta1_max = 175,
+                    theta1_max = 165,
                     
                     // r < (z-q)/k
                     zo = 950,
@@ -68,7 +68,7 @@ extern float add_z;
                     k = -zo/yo,
                     q = zo,
 
-                    r_min = 295;
+                    r_min = 260;
 
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c);
 
