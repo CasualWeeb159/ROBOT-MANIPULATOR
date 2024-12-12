@@ -44,29 +44,31 @@ extern float add_z;
 
 #else
 
-  float constexpr  k2 = SCARA_LINKAGE_1, k3 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
-                   k1 = SCARA_LINKAGE_3, L31 = SCARA_OFFSET_TOOL,
-                   lx = 139.5, ly = 0,
-                   lz = 129.43,
-                   L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
-                   L2_2 = sq(float(k2));
+  float constexpr   k2 = SCARA_LINKAGE_1, k3 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
+                    k1 = SCARA_LINKAGE_3, L31 = SCARA_OFFSET_TOOL,
+                    lx = 139.5, ly = 0,
+                    lz = 129.43,
+                    L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
+                    L2_2 = sq(float(k2)),
 
-  float constexpr alfa_min = -179.99,
-                  alfa_max = 180,
-                  beta_min = -80,
-                  beta_max = 40,
-                  gamma_min = 0,
-                  gamma_max = 115,
+                    alfa_min = -179.99,
+                    alfa_max = 180,
+                    beta_min = -90,
+                    beta_max = 45,
+                    gamma_min = -20,
+                    gamma_max = 115,
 
-                  theta1_min = 20,
-                  theta1_max = 160,
-                  
-                  // r < (z-q)/k
-                  k = -0.75,
-                  q = 642;
+                    theta1_min = 5,
+                    theta1_max = 165,
+                    
+                    // r < (z-q)/k
+                    zo = 950,
+                    yo = 485,
 
-  const int       r_min = 335,
-                  r_max = 1200;
+                    k = -zo/yo,
+                    q = zo,
+
+                    r_min = 260;
 
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c);
 

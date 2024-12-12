@@ -89,7 +89,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
 
   float r = HYPOT(x, y);
 
-  if (r < r_min || r > r_max || r < (z-q)/k) {
+  if (r < r_min || r < (z-q)/k) {
     //SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
     return false;
   }
@@ -124,6 +124,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     {
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
+    
     const xyz_pos_t spos = raw;
 
     if (!already_checked && !are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
@@ -131,7 +132,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
       SERIAL_ECHOLNPGM("Chyba: Souřadnice je mimo povolený rozsah robota.");
       return;
     }
-
+    
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
     received_z = spos.z + lz;
