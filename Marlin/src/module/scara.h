@@ -74,7 +74,10 @@ extern float add_z;
 
 #endif
 
-void inverse_kinematics(const xyz_pos_t &raw);
+void inverse_kinematics(
+  const xyz_pos_t &raw,
+  bool is_only_a_question = false,
+  bool already_checked = false);
 void scara_set_axis_is_at_home(const AxisEnum axis);
 void scara_report_positions();
 bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c);

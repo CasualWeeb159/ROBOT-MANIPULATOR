@@ -370,6 +370,7 @@ struct PlannerHints {
                                       // i.e., at or below the exit speed of the segment that the planner
                                       // would calculate if it knew the as-yet-unbuffered path
   #endif
+  bool movement_possibility_already_checked = false; // Flag to indicate that the planner has already checked the possibility of movement
 
   PlannerHints(const_float_t mm=0.0f) : millimeters(mm) {}
 };
