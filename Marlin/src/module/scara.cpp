@@ -81,7 +81,7 @@ bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c){
     //SERIAL_ECHOLNPGM("Theha mimo rozsah");
     return false;
   }
-  SERIAL_ECHOLNPGM("ABC zkontrolováno");
+  //SERIAL_ECHOLNPGM("ABC zkontrolováno");
   return true;
 }
 
@@ -94,7 +94,7 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     //SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
     return false;
   }
-  SERIAL_ECHOLNPGM("XYZ zkontrolováno");
+  //SERIAL_ECHOLNPGM("XYZ zkontrolováno");
   return true;
 }
 
