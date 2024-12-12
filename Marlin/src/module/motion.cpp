@@ -1100,7 +1100,7 @@ FORCE_INLINE void segment_idle(millis_t &next_idle_ms) {
     inverse_kinematics(destination, true);
     if (kinematic_calc_failiure) {
       kinematic_calc_failiure = false;
-      SERIAL_ECHOLNPGM("Segmentovaný pohyb zastaven v motion.ccp line_to_destination_kinematic()");
+      //SERIAL_ECHOLNPGM("Segmentovaný pohyb zastaven v motion.ccp line_to_destination_kinematic()");
       return true;
     }
 

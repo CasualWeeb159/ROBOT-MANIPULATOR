@@ -3158,7 +3158,7 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
 
     if (kinematic_calc_failiure == true){
       kinematic_calc_failiure = false;
-      SERIAL_ECHOLNPGM("Zabráněno nemožnému pohybu v planner.cpp buffer_line()");
+      //SERIAL_ECHOLNPGM("Zabráněno nemožnému pohybu v planner.cpp buffer_line()");
       return false;
     }
 
