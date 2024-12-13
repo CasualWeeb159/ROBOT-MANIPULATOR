@@ -572,7 +572,16 @@ void do_blocking_move_to(NUM_AXIS_ARGS(const float), const_feedRate_t fr_mm_s/*=
 
   #if IS_KINEMATIC && DISABLED(POLARGRAPH)
     // kinematic machines are expected to home to a point 1.5x their range? never reachable.
-    if (!position_is_reachable(x, y)) return;
+    //if (!position_is_reachable(x, y)) return;
+    xyz_pos_t pos;
+    pos.x = x;
+    pos.y = y;
+    pos.z = z;
+    inverse_kinematics(pos, true);
+    if (kinematic_calc_failiure) {
+      kinematic_calc_failiure = false;
+      return;
+      }
     destination = current_position;          // sync destination at the start
   #endif
 
