@@ -40,7 +40,7 @@ bool GcodeSuite::select_coordinate_system(const int8_t _new) {
   LOOP_NUM_AXES(i) {
     if (position_shift[i] != new_offset[i]) {
       position_shift[i] = new_offset[i];
-      update_workspace_offset((AxisEnum)i);
+      //update_workspace_offset((AxisEnum)i);
     }
   }
   return true;
