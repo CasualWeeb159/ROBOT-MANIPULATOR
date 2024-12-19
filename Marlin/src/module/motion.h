@@ -625,3 +625,4 @@ void home_if_needed(const bool keeplev=false);
   void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_stealth);
 #endif
 void direct_angle_change(const abc_pos_t &angles);
+void user_coursys_test(const xyz_pos_t &pos);

@@ -2421,4 +2421,10 @@ void direct_angle_change(const abc_pos_t &angles){
   destination = cartes;
   prepare_fast_move_to_destination();
 }
+void user_coursys_test(const xyz_pos_t &pos){
+  SERIAL_ECHOLNPGM();
+
+
+}
+
 
