@@ -51,6 +51,8 @@
 #define ARC_LIJKUVW_CODE(L,I,J,K,U,V,W)    CODE_N(SUB2(NUM_AXES),L,I,J,K,U,V,W)
 #define ARC_LIJKUVWE_CODE(L,I,J,K,U,V,W,E) ARC_LIJKUVW_CODE(L,I,J,K,U,V,W); CODE_ITEM_E(E)
 
+extern bool kinematic_calc_failiure;
+
 /**
  * Plan an arc in 2 dimensions, with linear motion in the other axes.
  * The arc is traced with many small linear segments according to the configuration.
@@ -350,8 +352,13 @@ void plan_arc(
         , raw.e += extruder_per_segment
       );
 
-      apply_motion_limits(raw);
-
+      //apply_motion_limits(raw);
+      inverse_kinematics(raw, true);
+      if (kinematic_calc_failiure){
+        kinematic_calc_failiure = false;
+        break;
+      }
+      hints.movement_possibility_already_checked = true;
       #if HAS_LEVELING && !PLANNER_LEVELING
         planner.apply_leveling(raw);
       #endif
@@ -377,7 +384,13 @@ void plan_arc(
     );
   #endif
 
-  apply_motion_limits(raw);
+  //apply_motion_limits(raw);
+  inverse_kinematics(raw, true);
+  if (kinematic_calc_failiure){
+    kinematic_calc_failiure = false;
+    return;
+  }
+  hints.movement_possibility_already_checked = true;
 
   #if HAS_LEVELING && !PLANNER_LEVELING
     planner.apply_leveling(raw);

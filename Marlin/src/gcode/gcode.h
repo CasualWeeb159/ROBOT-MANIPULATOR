@@ -44,6 +44,7 @@
  * G3   - CCW ARC
  * G4   - Dwell S<seconds> or P<milliseconds>
  * G5   - Cubic B-spline with XYZE destination and IJPQ offsets
+ * G7   - Set robot angles alfa, beta, gamma dirrectly A B C
  * G10  - Retract filament according to settings of M207 (Requires FWRETRACT)
  * G11  - Retract recover filament according to settings of M208 (Requires FWRETRACT)
  * G12  - Clean tool (Requires NOZZLE_CLEAN_FEATURE)
@@ -496,6 +497,8 @@ private:
   #if ENABLED(DIRECT_STEPPING)
     static void G6();
   #endif
+
+  static void G7();
 
   #if ENABLED(FWRETRACT)
     static void G10();

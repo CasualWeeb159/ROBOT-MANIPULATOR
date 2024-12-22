@@ -44,17 +44,41 @@ extern float add_z;
 
 #else
 
-  float constexpr  k2 = SCARA_LINKAGE_1, k3 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
-                   k1 = SCARA_LINKAGE_3, L31 = SCARA_OFFSET_TOOL,
-                   lx = 139.5, ly = 0,
-                   lz = 129.43,
-                   L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
-                   L2_2 = sq(float(k2));
+  float constexpr   k2 = SCARA_LINKAGE_1, k3 = SCARA_LINKAGE_2,   // Float constants for SCARA calculations
+                    k1 = SCARA_LINKAGE_3, L31 = SCARA_OFFSET_TOOL,
+                    lx = 139.5, ly = 0,
+                    lz = 129.43,
+                    L1_2 = sq(float(k2)), L1_2_2 = 2.0 * L1_2,
+                    L2_2 = sq(float(k2)),
+
+                    alfa_min = -179.99,
+                    alfa_max = 180,
+                    beta_min = -90,
+                    beta_max = 45,
+                    gamma_min = -20,
+                    gamma_max = 115,
+
+                    theta1_min = 5,
+                    theta1_max = 165,
+                    
+                    // r < (z-q)/k
+                    zo = 950,
+                    yo = 485,
+
+                    k = -zo/yo,
+                    q = zo,
+
+                    r_min = 260;
 
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c);
 
 #endif
 
-void inverse_kinematics(const xyz_pos_t &raw);
+void inverse_kinematics(
+  const xyz_pos_t &raw,
+  bool is_only_a_question = false,
+  bool already_checked = false);
 void scara_set_axis_is_at_home(const AxisEnum axis);
 void scara_report_positions();
+bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c);
+//bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_float_t &z);

@@ -52,9 +52,8 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
 
   void forward_kinematics(const_float_t a, const_float_t b, const_float_t c) {
     const float alfa = RADIANS(a), // prevadime na radiany
-                 beta = M_PI/2 + RADIANS(b), // prevadime na radiany
-                 gama = M_PI/2 + RADIANS(c);
-
+                beta = M_PI/2 + RADIANS(b), // prevadime na radiany
+                gama = M_PI/2 + RADIANS(c);
 
     cartes.x = cos(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
     cartes.y = -sin(alfa)*(cos(beta)*k2 + sin((gama - beta) - (M_PI/2 - beta))*k3+lx);
@@ -62,6 +61,43 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
   }
 
 #endif
+
+bool are_angles_possible(const_float_t &a, const_float_t &b, const_float_t &c){
+  const float alfa = a,
+              beta = b,
+              gamma = c;
+
+  // Kontrola na imaginární části pro alfa, beta, gamma
+  if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)){
+    //SERIAL_ECHOLNPGM("Je nan");
+    return false;
+  }
+  // Kontrola na rozsah pro alfa, beta, gamma
+  if (!WITHIN(alfa,alfa_min,alfa_max)||!WITHIN(beta,beta_min,beta_max)||!WITHIN(gamma,gamma_min,gamma_max)){
+    //SERIAL_ECHOLNPGM("Uhel mimo rozsah");
+    return false;
+  }
+  if (!(gamma - beta > theta1_min) || !(gamma - beta < theta1_max)) {
+    //SERIAL_ECHOLNPGM("Theha mimo rozsah");
+    return false;
+  }
+  //SERIAL_ECHOLNPGM("ABC zkontrolováno");
+  return true;
+}
+
+
+bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_float_t &z){
+
+  float r = HYPOT(x, y);
+
+  if (r < r_min || r < (z-q)/k) {
+    //SERIAL_ECHOLNPGM("Vzálenost mimo rozsah");
+    return false;
+  }
+  //SERIAL_ECHOLNPGM("XYZ zkontrolováno");
+  return true;
+}
+
 
 #if ENABLED(MP_SCARA)
 
@@ -82,17 +118,28 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     //}
   }
 
-  void inverse_kinematics(const xyz_pos_t &raw) {
+  void inverse_kinematics(
+    const xyz_pos_t &raw,
+    bool is_only_a_question,
+    bool already_checked)
+    {
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
+    
     const xyz_pos_t spos = raw;
 
+    if (!already_checked && !are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
+      kinematic_calc_failiure = true;
+      SERIAL_ECHOLNPGM("Chyba: Souřadnice je mimo povolený rozsah robota.");
+      return;
+    }
+    
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
-    received_z = spos.z +lz;
+    received_z = spos.z + lz;
 
-    SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
-    SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
+    //SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
+    //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
 
     alfares = atan2(-received_y, received_x);
     d1 = (-received_y)/(sin(alfares)) -lx;
@@ -104,18 +151,19 @@ float segments_per_second = TERN(AXEL_TPARA, TPARA_SEGMENTS_PER_SECOND, DEFAULT_
     alfa = alfares*(180/M_PI);
     beta = (beta1 + beta2 - M_PI/2)*(180/M_PI);
     gamma = (beta1 + beta2 + o1 - M_PI/2)*(180/M_PI);
-    SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
+    //SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
 
-    // Kontrola na imaginární části pro alfa, beta, gamma
-    if (std::isnan(alfa) || std::isnan(beta) || std::isnan(gamma)) {
-        SERIAL_ECHOLNPGM("Chyba: Jeden z úhlů obsahuje imaginární část. Program bude ukončen.");
-        //inverse_kinematics(current_position);
-        kinematic_calc_failiure = true;
-        SERIAL_ECHOLNPGM("kinematic_failiure:", kinematic_calc_failiure);
-    } else{
+    if (!already_checked && !are_angles_possible(alfa,beta,gamma)){
+      kinematic_calc_failiure = true;
+      SERIAL_ECHOLNPGM("Chyba: Úhel je mimo povolený rozsah robota.");
+      return;
+    }
+
+    if (is_only_a_question){
+      return;
+    }
+    
     delta.set(alfa, beta, gamma);
-  }
-
   }
 
 #elif ENABLED(MP_SCARA)
