@@ -323,6 +323,9 @@ void GcodeSuite::dwell(millis_t time) {
 /**
  * Process the parsed command and dispatch it to its handler
  */
+
+bool break_command_pending = false; //Proměnná vyjadřující zda nečeká nějaký M50 příkaz na odsouhlasení
+
 void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   TERN_(HAS_FANCHECK, fan_check.check_deferred_error());
 
@@ -352,6 +355,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   switch (parser.command_letter) {
 
     case 'G': switch (parser.codenum) {
+
+      break_command_pending = false;                              // Pokud není hned po M50 další příkaz M51, musí se nastavit jako false
 
       case 0: case 1:                                             // G0: Fast Move, G1: Linear Move
         G0_G1(TERN_(HAS_FAST_MOVES, parser.codenum == 0)); break;
@@ -483,6 +488,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
 
     case 'M': switch (parser.codenum) {
 
+      case 51: M51(); break;                                      // Potvrzení nastavení ramen robotu
+      break_command_pending = false;                              // Pokud není hned po M50 další příkaz M51, musí se nastavit jako false
+
       #if HAS_RESUME_CONTINUE
         case 0:                                                   // M0: Unconditional stop - Wait for user button press on LCD
         case 1: M0_M1(); break;                                   // M1: Conditional stop - Wait for user button press on LCD
@@ -562,6 +570,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #if ENABLED(Z_MIN_PROBE_REPEATABILITY_TEST)
         case 48: M48(); break;                                    // M48: Z probe repeatability test
       #endif
+
+      case 50: M50(); break;                                      // Nastavení brzd ramen robotu
 
       #if ENABLED(SET_PROGRESS_MANUALLY)
         case 73: M73(); break;                                    // M73: Set progress percentage

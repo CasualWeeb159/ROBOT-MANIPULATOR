@@ -681,6 +681,9 @@ private:
     static void M48();
   #endif
 
+  static void M50();
+  static void M51();
+
   #if ENABLED(SET_PROGRESS_MANUALLY)
     static void M73();
   #endif
