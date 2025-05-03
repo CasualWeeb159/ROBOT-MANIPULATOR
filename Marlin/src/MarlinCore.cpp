@@ -1643,6 +1643,11 @@ void setup() {
     SETUP_RUN(bdl.init(I2C_BD_SDA_PIN, I2C_BD_SCL_PIN, I2C_BD_DELAY));
   #endif
 
+  pinMode(PE7, OUTPUT);
+  pinMode(PE8, OUTPUT);
+  digitalWrite(PE7, LOW);
+  digitalWrite(PE8, LOW);
+
   marlin_state = MF_RUNNING;
 
   SETUP_LOG("setup() completed.");

@@ -7,24 +7,29 @@ M50 S0 ... přepne obě brzdy na driver (automaticky)
 M50.1 S1 ... přepne brzdu hlavního ramene na driver (automaticky)
       S0 ... přepne brzdu hlavního ramene na zdroj 24V (odbržděno)
 
-M50.1 S1 ... přepne brzdu vedlejšího ramene na driver (automaticky)
+M50.2 S1 ... přepne brzdu vedlejšího ramene na driver (automaticky)
       S0 ... přepne brzdu vedlejšího ramene na zdroj 24V (odbržděno)
 */
 
-bool PE7_state = false; //stav pinu PE7 --> 0 ... brzdy hlavního ramene napojeny na driver   (odbržděny když jsou napájeny i motory)
+byte PE7_state;         //stav pinu PE7 --> 0 ... brzdy hlavního ramene napojeny na driver   (odbržděny když jsou napájeny i motory)
                         //                  1 ... brzdy hlavního ramene napojeny na zdroj    (pořád odbržděny)
-bool PE8_state = false; //stav pinu PE7 --> 0 ... brzdy vedlejšího ramene napojeny na driver (odbržděny když jsou napájeny i motory)
+byte PE8_state;         //stav pinu PE7 --> 0 ... brzdy vedlejšího ramene napojeny na driver (odbržděny když jsou napájeny i motory)
                         //                  1 ... brzdy vedlejšího ramene napojeny na zdroj  (pořád odbržděny)
 
 extern bool break_command_pending;
 
 void GcodeSuite::M50() {
+
+    PE7_state = extDigitalRead(PE7);
+    PE8_state = extDigitalRead(PE8);
+
     const uint8_t subcode_M50 = parser.subcode;
 
     if (!parser.seenval('S')) return;
     const byte pin_status = parser.value_byte();
     
     switch (subcode_M50){
+        default: return;
         case 0:{
             PE7_state = pin_status;
             PE8_state = pin_status;
@@ -38,6 +43,7 @@ void GcodeSuite::M50() {
             PE8_state = pin_status;
             break;
         }
+        
     }
 
     SERIAL_ECHOLNPGM("Prosím potvrdtě změnu příkazem M51");
@@ -49,11 +55,8 @@ void GcodeSuite::M50() {
 //Příkaz na potvrzení změny zdroje pro brzdy
 void GcodeSuite::M51() {
 
-    pinMode(71,OUTPUT);
-    pinMode(72,OUTPUT);
-
-    extDigitalWrite(71,PE7_state);
-    extDigitalWrite(72,PE8_state);
+    extDigitalWrite(PE7,PE7_state);
+    extDigitalWrite(PE8,PE8_state);
 
     break_command_pending = false;
 }
