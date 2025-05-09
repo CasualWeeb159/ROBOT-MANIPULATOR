@@ -351,12 +351,26 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   #endif
 
   // Handle a known command or reply "unknown command"
+  /*
+  if  ((parser.command_letter == 'M' && parser.codenum == 51) ||
+      (parser.command_letter == 'M' && parser.codenum == 105) ||
+      (parser.command_letter == 'M' && parser.codenum == 50)) {}
+  else{
+    break_command_pending = false;
+    SERIAL_ECHOLNPGM("Příkaz M51 zrušen");
+    // Pokud není příkaz 'M' a zároveň codenum není 51, nastaví se break_command_pending na false
+  }
+  */
+  if (!(parser.command_letter == 'M' && (parser.codenum == 51 || parser.codenum == 105 || parser.codenum == 50))) {
+    if (break_command_pending == true){
+      break_command_pending = false;
+      SERIAL_ECHOLNPGM("Příkaz M51 zrušen");
+    }
+  } // Pokud není příkaz 'M' a zároveň codenum není 51, 105 nebo 50, nastaví se break_command_pending na false
 
   switch (parser.command_letter) {
 
     case 'G': switch (parser.codenum) {
-
-      break_command_pending = false;                              // Pokud není hned po M50 další příkaz M51, musí se nastavit jako false
 
       case 0: case 1:                                             // G0: Fast Move, G1: Linear Move
         G0_G1(TERN_(HAS_FAST_MOVES, parser.codenum == 0)); break;
@@ -489,7 +503,6 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
     case 'M': switch (parser.codenum) {
 
       case 51: M51(); break;                                      // Potvrzení nastavení ramen robotu
-      break_command_pending = false;                              // Pokud není hned po M50 další příkaz M51, musí se nastavit jako false
 
       #if HAS_RESUME_CONTINUE
         case 0:                                                   // M0: Unconditional stop - Wait for user button press on LCD

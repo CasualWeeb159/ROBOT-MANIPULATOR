@@ -20,13 +20,17 @@ extern bool break_command_pending;
 
 void GcodeSuite::M50() {
 
+    //PE7_state = (extDigitalRead(PE7) == 0) ? HIGH : LOW;
+    //PE8_state = (extDigitalRead(PE8) == 0) ? HIGH : LOW;
+
     PE7_state = extDigitalRead(PE7);
     PE8_state = extDigitalRead(PE8);
 
     const uint8_t subcode_M50 = parser.subcode;
 
     if (!parser.seenval('S')) return;
-    const byte pin_status = parser.value_byte();
+    
+    const byte pin_status = (parser.value_byte() == 0) ? HIGH : LOW;
     
     switch (subcode_M50){
         default: return;
@@ -54,6 +58,11 @@ void GcodeSuite::M50() {
 
 //Příkaz na potvrzení změny zdroje pro brzdy
 void GcodeSuite::M51() {
+    
+    if (break_command_pending == false) {
+        SERIAL_ECHOLNPGM("Není zadán žádný příkaz M50.");
+        return;
+    } //pokud nečeká žádný povel na potvrzení, funkce nic neudělá
 
     extDigitalWrite(PE7,PE7_state);
     extDigitalWrite(PE8,PE8_state);
