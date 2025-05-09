@@ -20,9 +20,6 @@ extern bool break_command_pending;
 
 void GcodeSuite::M50() {
 
-    //PE7_state = (extDigitalRead(PE7) == 0) ? HIGH : LOW;
-    //PE8_state = (extDigitalRead(PE8) == 0) ? HIGH : LOW;
-
     PE7_state = extDigitalRead(PE7);
     PE8_state = extDigitalRead(PE8);
 
