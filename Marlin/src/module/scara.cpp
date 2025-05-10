@@ -129,9 +129,9 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     const xyz_pos_t spos = raw;
 
 
-    if ((extDigitalRead(71) > 0) || (extDigitalRead(72) > 0)) {
+    if ((extDigitalRead(71) == 0) || (extDigitalRead(72) == 0)) {
       kinematic_calc_failiure = true;
-      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na LOW a zadejte příkaz znovu.");
+      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na automatické ovládání pomocí příkazu M50 S0");
       return;
     }
 

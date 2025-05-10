@@ -11,10 +11,10 @@ M50.2 S1 ... přepne brzdu vedlejšího ramene na driver (automaticky)
       S0 ... přepne brzdu vedlejšího ramene na zdroj 24V (odbržděno)
 */
 
-byte PE7_state;         //stav pinu PE7 --> 0 ... brzdy hlavního ramene napojeny na driver   (odbržděny když jsou napájeny i motory)
-                        //                  1 ... brzdy hlavního ramene napojeny na zdroj    (pořád odbržděny)
-byte PE8_state;         //stav pinu PE7 --> 0 ... brzdy vedlejšího ramene napojeny na driver (odbržděny když jsou napájeny i motory)
-                        //                  1 ... brzdy vedlejšího ramene napojeny na zdroj  (pořád odbržděny)
+byte PE7_state;         //stav pinu PE7 --> 1 ... brzdy hlavního ramene napojeny na driver   (odbržděny když jsou napájeny i motory)
+                        //                  0 ... brzdy hlavního ramene napojeny na zdroj    (pořád odbržděny)
+byte PE8_state;         //stav pinu PE7 --> 1 ... brzdy vedlejšího ramene napojeny na driver (odbržděny když jsou napájeny i motory)
+                        //                  0 ... brzdy vedlejšího ramene napojeny na zdroj  (pořád odbržděny)
 
 extern bool break_command_pending;
 
