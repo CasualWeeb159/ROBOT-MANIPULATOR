@@ -1789,6 +1789,7 @@ void prepare_line_to_destination() {
       // Set delta/cartesian axes directly
       target[axis] = distance;                  // The move will be towards the endstop
       planner.buffer_segment(target OPTARG(HAS_DIST_MM_ARG, cart_dist_mm), home_fr_mm_s, active_extruder);
+      
     #endif
 
     planner.synchronize();
@@ -1967,9 +1968,12 @@ void prepare_line_to_destination() {
 
   void homeaxis(const AxisEnum axis) {
 
+    /*
     #if EITHER(MORGAN_SCARA, MP_SCARA)
       // Only Z homing (with probe) is permitted
       if (axis != Z_AXIS) { BUZZ(100, 880); return; }
+    */ // %%ZRUŠENO%%
+
     #else
       #define _CAN_HOME(A) (axis == _AXIS(A) && ( \
            ENABLED(A##_SPI_SENSORLESS) \

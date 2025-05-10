@@ -371,7 +371,7 @@ void GcodeSuite::G28() {
     home_TPARA();
 
   #else
-
+    
     #define _UNSAFE(A) (homeZ && TERN0(Z_SAFE_HOMING, axes_should_home(_BV(A##_AXIS))))
 
     const bool homeZ = TERN0(HAS_Z_AXIS, parser.seen_test('Z')),
@@ -418,11 +418,7 @@ void GcodeSuite::G28() {
     }
 
     // Diagonal move first if both are homing
-    TERN_(QUICK_HOME, if (doX && doY) quick_home_xy());
-
-    // Home Y (before X)
-    if (ENABLED(HOME_Y_BEFORE_X) && (doY || TERN0(CODEPENDENT_XY_HOMING, doX)))
-      homeaxis(Y_AXIS);
+    //TERN_(QUICK_HOME, if (doX && doY) quick_home_xy()); %%ZRUŠENO%%
 
     // Home X
     if (doX || (doY && ENABLED(CODEPENDENT_XY_HOMING) && DISABLED(HOME_Y_BEFORE_X))) {
