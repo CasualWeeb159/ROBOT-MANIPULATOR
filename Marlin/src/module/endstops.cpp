@@ -454,7 +454,10 @@ void Endstops::not_homing() {
   // If the last move failed to trigger an endstop, call kill
   void Endstops::validate_homing_move() {
     if (trigger_state()) hit_on_purpose();
-    else kill(GET_TEXT_F(MSG_KILL_HOMING_FAILED));
+    else {
+      //kill(GET_TEXT_F(MSG_KILL_HOMING_FAILED))
+      SERIAL_ECHOLNPGM("Během do_homing_move() se nestisknul endstop");
+    };
   }
 #endif
 
@@ -1036,6 +1039,13 @@ void Endstops::update() {
 
   #endif
 
+  // sledování změny endstopu
+  static endstop_mask_t old_live_state;
+  static endstop_mask_t endstop_changed = old_live_state ^ live_state;
+
+  // Test jestli proběhla změna stavu endstopu
+  #define ENDSTOP_CHANGED(ENDSTOP) (TEST(endstop_changed, ENDSTOP))
+
   // Test the current status of an endstop
   #define TEST_ENDSTOP(ENDSTOP) (TEST(state(), ENDSTOP))
 
@@ -1044,11 +1054,12 @@ void Endstops::update() {
 
   // Call the endstop triggered routine for single endstops
   #define PROCESS_ENDSTOP(AXIS, MINMAX) do { \
-    if (TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX))) { \
+    if ((TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX)) && (_AXIS(AXIS) == X_AXIS)) || \
+        (ENDSTOP_CHANGED(_ENDSTOP(AXIS, MINMAX)) && ((_AXIS(AXIS) == Y_AXIS) || (_AXIS(AXIS) == Z_AXIS)))) { \
       _ENDSTOP_HIT(AXIS, MINMAX); \
       planner.endstop_triggered(_AXIS(AXIS)); \
     } \
-  }while(0)
+  } while(0)
 
   // Core Sensorless Homing needs to test an Extra Pin
   #define CORE_DIAG(QQ,A,MM) (CORE_IS_##QQ && A##_SENSORLESS && !A##_SPI_SENSORLESS && HAS_##A##_##MM)
@@ -1130,7 +1141,7 @@ void Endstops::update() {
   // Signal, after validation, if an endstop limit is pressed or not
 
   if (stepper.axis_is_moving(X_AXIS)) {
-    if (stepper.motor_direction(X_AXIS_HEAD)) { // -direction
+
       #if HAS_X_MIN || (X_SPI_SENSORLESS && X_HOME_TO_MIN)
         PROCESS_ENDSTOP_X(MIN);
         #if   CORE_DIAG(XY, Y, MIN)
@@ -1143,8 +1154,8 @@ void Endstops::update() {
           PROCESS_CORE_ENDSTOP(Z,MAX,X,MIN);
         #endif
       #endif
-    }
-    else { // +direction
+
+
       #if HAS_X_MAX || (X_SPI_SENSORLESS && X_HOME_TO_MAX)
         PROCESS_ENDSTOP_X(MAX);
         #if   CORE_DIAG(XY, Y, MIN)
@@ -1157,12 +1168,12 @@ void Endstops::update() {
           PROCESS_CORE_ENDSTOP(Z,MAX,X,MAX);
         #endif
       #endif
-    }
+
   }
 
   #if HAS_Y_AXIS
     if (stepper.axis_is_moving(Y_AXIS)) {
-      if (stepper.motor_direction(Y_AXIS_HEAD)) { // -direction
+
         #if HAS_Y_MIN || (Y_SPI_SENSORLESS && Y_HOME_TO_MIN)
           PROCESS_ENDSTOP_Y(MIN);
           #if   CORE_DIAG(XY, X, MIN)
@@ -1175,8 +1186,8 @@ void Endstops::update() {
             PROCESS_CORE_ENDSTOP(Z,MAX,Y,MIN);
           #endif
         #endif
-      }
-      else { // +direction
+
+
         #if HAS_Y_MAX || (Y_SPI_SENSORLESS && Y_HOME_TO_MAX)
           PROCESS_ENDSTOP_Y(MAX);
           #if   CORE_DIAG(XY, X, MIN)
@@ -1189,13 +1200,12 @@ void Endstops::update() {
             PROCESS_CORE_ENDSTOP(Z,MAX,Y,MAX);
           #endif
         #endif
-      }
+
     }
   #endif
 
   #if HAS_Z_AXIS
     if (stepper.axis_is_moving(Z_AXIS)) {
-      if (stepper.motor_direction(Z_AXIS_HEAD)) { // Z -direction. Gantry down, bed up.
 
         #if HAS_Z_MIN || (Z_SPI_SENSORLESS && Z_HOME_TO_MIN)
           if ( TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled)
@@ -1216,8 +1226,7 @@ void Endstops::update() {
         #if USES_Z_MIN_PROBE_PIN
           if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN_PROBE);
         #endif
-      }
-      else { // Z +direction. Gantry up, bed down.
+
         #if HAS_Z_MAX || (Z_SPI_SENSORLESS && Z_HOME_TO_MAX)
           #if ENABLED(Z_MULTI_ENDSTOPS)
             PROCESS_ENDSTOP_Z(MAX);
@@ -1234,197 +1243,13 @@ void Endstops::update() {
             PROCESS_CORE_ENDSTOP(Y,MAX,Z,MAX);
           #endif
         #endif
-      }
     }
   #endif
 
-  #if HAS_I_AXIS
-    if (stepper.axis_is_moving(I_AXIS)) {
-      if (stepper.motor_direction(I_AXIS_HEAD)) { // -direction
-        #if HAS_I_MIN || (I_SPI_SENSORLESS && I_HOME_TO_MIN)
-          PROCESS_ENDSTOP(I, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_I_MAX || (I_SPI_SENSORLESS && I_HOME_TO_MAX)
-          PROCESS_ENDSTOP(I, MAX);
-        #endif
-      }
-    }
-  #endif
+  old_live_state = live_state;
+  endstop_changed = 0;
 
-  #if HAS_J_AXIS
-    if (stepper.axis_is_moving(J_AXIS)) {
-      if (stepper.motor_direction(J_AXIS_HEAD)) { // -direction
-        #if HAS_J_MIN || (J_SPI_SENSORLESS && J_HOME_TO_MIN)
-          PROCESS_ENDSTOP(J, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_J_MAX || (J_SPI_SENSORLESS && J_HOME_TO_MAX)
-          PROCESS_ENDSTOP(J, MAX);
-        #endif
-      }
-    }
-  #endif
-
-  #if HAS_K_AXIS
-    if (stepper.axis_is_moving(K_AXIS)) {
-      if (stepper.motor_direction(K_AXIS_HEAD)) { // -direction
-        #if HAS_K_MIN || (K_SPI_SENSORLESS && K_HOME_TO_MIN)
-          PROCESS_ENDSTOP(K, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_K_MAX || (K_SPI_SENSORLESS && K_HOME_TO_MAX)
-          PROCESS_ENDSTOP(K, MAX);
-        #endif
-      }
-    }
-  #endif
-
-  #if HAS_U_AXIS
-    if (stepper.axis_is_moving(U_AXIS)) {
-      if (stepper.motor_direction(U_AXIS_HEAD)) { // -direction
-        #if HAS_U_MIN || (U_SPI_SENSORLESS && U_HOME_TO_MIN)
-          PROCESS_ENDSTOP(U, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_U_MAX || (U_SPI_SENSORLESS && U_HOME_TO_MAX)
-          PROCESS_ENDSTOP(U, MAX);
-        #endif
-      }
-    }
-  #endif
-
-  #if HAS_V_AXIS
-    if (stepper.axis_is_moving(V_AXIS)) {
-      if (stepper.motor_direction(V_AXIS_HEAD)) { // -direction
-        #if HAS_V_MIN || (V_SPI_SENSORLESS && V_HOME_TO_MIN)
-          PROCESS_ENDSTOP(V, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_V_MAX || (V_SPI_SENSORLESS && V_HOME_TO_MAX)
-          PROCESS_ENDSTOP(V, MAX);
-        #endif
-      }
-    }
-  #endif
-
-  #if HAS_W_AXIS
-    if (stepper.axis_is_moving(W_AXIS)) {
-      if (stepper.motor_direction(W_AXIS_HEAD)) { // -direction
-        #if HAS_W_MIN || (W_SPI_SENSORLESS && W_HOME_TO_MIN)
-          PROCESS_ENDSTOP(W, MIN);
-        #endif
-      }
-      else { // +direction
-        #if HAS_W_MAX || (W_SPI_SENSORLESS && W_HOME_TO_MAX)
-          PROCESS_ENDSTOP(W, MAX);
-        #endif
-      }
-    }
-  #endif
-} // Endstops::update()
-
-#if ENABLED(SPI_ENDSTOPS)
-
-  // Called from idle() to read Trinamic stall states
-  bool Endstops::tmc_spi_homing_check() {
-    bool hit = false;
-    #if X_SPI_SENSORLESS
-      if (tmc_spi_homing.x && (stepperX.test_stall_status()
-        #if ANY(CORE_IS_XY, MARKFORGED_XY, MARKFORGED_YX) && Y_SPI_SENSORLESS
-          || stepperY.test_stall_status()
-        #elif CORE_IS_XZ && Z_SPI_SENSORLESS
-          || stepperZ.test_stall_status()
-        #endif
-      )) {
-        SBI(live_state, X_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if Y_SPI_SENSORLESS
-      if (tmc_spi_homing.y && (stepperY.test_stall_status()
-        #if ANY(CORE_IS_XY, MARKFORGED_XY, MARKFORGED_YX) && X_SPI_SENSORLESS
-          || stepperX.test_stall_status()
-        #elif CORE_IS_YZ && Z_SPI_SENSORLESS
-          || stepperZ.test_stall_status()
-        #endif
-      )) {
-        SBI(live_state, Y_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if Z_SPI_SENSORLESS
-      if (tmc_spi_homing.z && (stepperZ.test_stall_status()
-        #if CORE_IS_XZ && X_SPI_SENSORLESS
-          || stepperX.test_stall_status()
-        #elif CORE_IS_YZ && Y_SPI_SENSORLESS
-          || stepperY.test_stall_status()
-        #endif
-      )) {
-        SBI(live_state, Z_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if I_SPI_SENSORLESS
-      if (tmc_spi_homing.i && stepperI.test_stall_status()) {
-        SBI(live_state, I_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if J_SPI_SENSORLESS
-      if (tmc_spi_homing.j && stepperJ.test_stall_status()) {
-        SBI(live_state, J_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if K_SPI_SENSORLESS
-      if (tmc_spi_homing.k && stepperK.test_stall_status()) {
-        SBI(live_state, K_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if U_SPI_SENSORLESS
-      if (tmc_spi_homing.u && stepperU.test_stall_status()) {
-        SBI(live_state, U_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if V_SPI_SENSORLESS
-      if (tmc_spi_homing.v && stepperV.test_stall_status()) {
-        SBI(live_state, V_ENDSTOP);
-        hit = true;
-      }
-    #endif
-    #if W_SPI_SENSORLESS
-      if (tmc_spi_homing.w && stepperW.test_stall_status()) {
-        SBI(live_state, W_ENDSTOP);
-        hit = true;
-      }
-    #endif
-
-    if (TERN0(ENDSTOP_INTERRUPTS_FEATURE, hit)) update();
-
-    return hit;
-  }
-
-  void Endstops::clear_endstop_state() {
-    TERN_(X_SPI_SENSORLESS, CBI(live_state, X_ENDSTOP));
-    TERN_(Y_SPI_SENSORLESS, CBI(live_state, Y_ENDSTOP));
-    TERN_(Z_SPI_SENSORLESS, CBI(live_state, Z_ENDSTOP));
-    TERN_(I_SPI_SENSORLESS, CBI(live_state, I_ENDSTOP));
-    TERN_(J_SPI_SENSORLESS, CBI(live_state, J_ENDSTOP));
-    TERN_(K_SPI_SENSORLESS, CBI(live_state, K_ENDSTOP));
-    TERN_(U_SPI_SENSORLESS, CBI(live_state, U_ENDSTOP));
-    TERN_(V_SPI_SENSORLESS, CBI(live_state, V_ENDSTOP));
-    TERN_(W_SPI_SENSORLESS, CBI(live_state, W_ENDSTOP));
-  }
-
-#endif // SPI_ENDSTOPS
+}
 
 #if ENABLED(PINS_DEBUGGING)
 

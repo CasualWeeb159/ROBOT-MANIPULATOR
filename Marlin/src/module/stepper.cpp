@@ -3164,7 +3164,12 @@ void Stepper::set_axis_position(const AxisEnum a, const int32_t &v) {
 // Stepper ISR (this CAN happen with the endstop limits ISR) then
 // when the stepper ISR resumes, we must be very sure that the movement
 // is properly canceled
+
+//extern Endstops::endstop_mask_t endstop_changed;
+
 void Stepper::endstop_triggered(const AxisEnum axis) {
+
+  SERIAL_ECHOLNPGM("Hitnutý endstop, stavíme!!! [funkce endstop_triggered()]");
 
   const bool was_enabled = suspend();
   endstops_trigsteps[axis] = (

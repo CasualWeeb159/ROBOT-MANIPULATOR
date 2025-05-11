@@ -92,7 +92,7 @@ FORCE_INLINE feedRate_t homing_feedrate(const AxisEnum a) {
   return MMM_TO_MMS(v);
 }
 
-feedRate_t get_homing_bump_feedrate(const AxisEnum axis);
+feedRate_t get_homing_bump_feedrate();
 
 /**
  * The default feedrate for many moves, set by the most recent move
