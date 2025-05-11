@@ -475,8 +475,12 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/) {
-  planner.buffer_line(current_position, fr_mm_s);
+void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/, bool check_kinematics) {
+
+  PlannerHints ph;
+  ph.movement_possibility_already_checked = true;
+
+  planner.buffer_line(current_position, fr_mm_s, active_extruder, ph);
 }
 
 #if HAS_EXTRUDERS
@@ -1551,7 +1555,7 @@ void prepare_line_to_destination() {
     }
     forward_kinematics(delta.a, delta.b, delta.c);
     current_position = cartes;
-    line_to_current_position(home_fr_mm_s);
+    line_to_current_position(home_fr_mm_s, false);
 
     planner.synchronize();
 
@@ -1588,23 +1592,30 @@ void prepare_line_to_destination() {
 
   void homeaxis(const AxisEnum axis) {
 
-    //směr ještě vyřeším dle endstopů
+    static bool B_ENDSTOP = extDigitalRead(PG9);
+    static bool C_ENDSTOP = extDigitalRead(PG10);
+
+    SERIAL_ECHOLNPGM("B_ENDSTOP je ", B_ENDSTOP, " a C_ENDSTOP je ", C_ENDSTOP);
+
     int axis_home_dir;
     float move_length;
     switch (axis) {
       case A_AXIS: {
         axis_home_dir = -1;
-        //move_length = alfa_max * axis_home_dir;
-        move_length = 50 * axis_home_dir;
+        //move_length = 360 * axis_home_dir;
+        move_length = 30 * axis_home_dir;
       }
       case B_AXIS: {
-        axis_home_dir = 1;
-        //move_length = beta_max * axis_home_dir;
+
+        if (!B_ENDSTOP) axis_home_dir = 1;
+        else axis_home_dir = -1;
+        //move_length = 360 * axis_home_dir;
         move_length = 30 * axis_home_dir;
       }
       case C_AXIS: {
-        axis_home_dir = 1;
-        //move_length = gamma_max * axis_home_dir;
+        if (!C_ENDSTOP) axis_home_dir = -1;
+        else axis_home_dir = 1;
+        //move_length = 360 * axis_home_dir;
         move_length = 30 * axis_home_dir;
       }
       default: return;
@@ -1633,8 +1644,7 @@ void prepare_line_to_destination() {
       do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
     }
 
-      set_axis_is_at_home(axis);
-      sync_plan_position();
+
 
   } // homeaxis()
 

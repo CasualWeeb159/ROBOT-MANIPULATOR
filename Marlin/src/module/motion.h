@@ -319,7 +319,7 @@ void sync_plan_position();
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s);
+void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s, bool check_kinematics = true);
 
 #if HAS_EXTRUDERS
   void unscaled_e_move(const_float_t length, const_feedRate_t fr_mm_s);

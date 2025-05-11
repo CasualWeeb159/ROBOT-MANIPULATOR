@@ -310,19 +310,26 @@ void GcodeSuite::G28() {
       TERN_(BLTOUCH, bltouch.init());
     }
 
-if (ANY(doX, doY, doZ)){
+bool B_ENDSTOP = extDigitalRead(PG9);
+
   SERIAL_ECHOLNPGM("HOMING A [G28--316]");
   homeaxis(A_AXIS);
+  set_axis_is_at_home(A_AXIS);
+
+  if (B_ENDSTOP == false) {
+    SERIAL_ECHOLNPGM("HOMING C (mezikrok před konečným homováním[G28--320]");
+    homeaxis(C_AXIS);
+  }
+
   SERIAL_ECHOLNPGM("HOMING B [G28--318]");
   homeaxis(B_AXIS);
+  set_axis_is_at_home(B_AXIS);
+  
   SERIAL_ECHOLNPGM("HOMING C [G28--320]");
   homeaxis(C_AXIS);
-}
+  set_axis_is_at_home(C_AXIS);
 
-    
-    TERN_(IMPROVE_HOMING_RELIABILITY, end_slow_homing(saved_motion_state));
-
-    sync_plan_position();
+  sync_plan_position();
 
   /**
    * Preserve DXC mode across a G28 for IDEX printers in DXC_DUPLICATION_MODE.
