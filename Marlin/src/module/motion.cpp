@@ -1537,24 +1537,26 @@ void prepare_line_to_destination() {
     const feedRate_t home_fr_mm_s = fr_mm_s ?: homing_feedrate(X_AXIS);
 
     switch (axis) {
-      case A_AXIS: delta.a = 0;
-      case B_AXIS: delta.b = 0;
-      case C_AXIS: delta.c = 0;
+      case A_AXIS: delta.a = 0;break;
+      case B_AXIS: delta.b = 0;break;
+      case C_AXIS: delta.c = 0;break;
       default: return;
     }
 
     forward_kinematics(delta.a, delta.b, delta.c);
     current_position = cartes;
+    report_current_position();
     sync_plan_position();
 
     switch (axis) {
-      case A_AXIS: delta.a = distance;
-      case B_AXIS: delta.b = distance;
-      case C_AXIS: delta.c = distance;
+      case A_AXIS: delta.a = distance;break;
+      case B_AXIS: delta.b = distance;break;
+      case C_AXIS: delta.c = distance;break;
       default: return;
     }
     forward_kinematics(delta.a, delta.b, delta.c);
     current_position = cartes;
+    report_current_position();
     line_to_current_position(home_fr_mm_s, false);
 
     planner.synchronize();
@@ -1604,24 +1606,24 @@ void prepare_line_to_destination() {
         axis_home_dir = -1;
         //move_length = 360 * axis_home_dir;
         move_length = 30 * axis_home_dir;
-      }
+      }break;
       case B_AXIS: {
 
         if (!B_ENDSTOP) axis_home_dir = 1;
         else axis_home_dir = -1;
         //move_length = 360 * axis_home_dir;
         move_length = 30 * axis_home_dir;
-      }
+      }break;
       case C_AXIS: {
         if (!C_ENDSTOP) axis_home_dir = -1;
         else axis_home_dir = 1;
         //move_length = 360 * axis_home_dir;
         move_length = 30 * axis_home_dir;
-      }
+      }break;
       default: return;
     }
     // Determine if a homing bump will be done and the bumps distance
-    const float bump = 5; //bump v mm
+    const float bump = 5 * axis_home_dir; //bump v mm
 
     //
     // Fast move towards endstop until triggered
@@ -1632,10 +1634,14 @@ void prepare_line_to_destination() {
 
     // If a second homing move is configured...
     if (bump) {
+
+      endstops.not_homing();
       // Move away from the endstop by the axis HOMING_BUMP_MM
       SERIAL_ECHOLNPGM("RYCHLÝ POHYB OD ENDSTOPU [motion.cpp--2009]");
       SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
       do_homing_move(axis, -bump, 0.0, false);
+
+      endstops.enable(true);
 
       // Slow move towards endstop until triggered
       SERIAL_ECHOLNPGM("POMALÝ POHYB K ENDSTOPU [motion.cpp--2014]");

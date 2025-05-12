@@ -62,6 +62,8 @@ bool Endstops::enabled, Endstops::enabled_globally; // Initialized by settings.l
 
 volatile Endstops::endstop_mask_t Endstops::hit_state;
 Endstops::endstop_mask_t Endstops::live_state = 0;
+Endstops::endstop_mask_t Endstops::old_live_state = 0;
+Endstops::endstop_mask_t Endstops::endstop_changed = 0;
 
 #if ENABLED(BD_SENSOR)
   bool Endstops::bdp_state; // = false
@@ -1040,11 +1042,10 @@ void Endstops::update() {
   #endif
 
   // sledování změny endstopu
-  static endstop_mask_t old_live_state;
-  static endstop_mask_t endstop_changed = old_live_state ^ live_state;
 
   // Test jestli proběhla změna stavu endstopu
-  #define ENDSTOP_CHANGED(ENDSTOP) (TEST(endstop_changed, ENDSTOP))
+  endstop_mask_t changed = change_state();
+  #define ENDSTOP_CHANGED(ENDSTOP) (TEST(changed, ENDSTOP))
 
   // Test the current status of an endstop
   #define TEST_ENDSTOP(ENDSTOP) (TEST(state(), ENDSTOP))
@@ -1053,14 +1054,30 @@ void Endstops::update() {
   #define _ENDSTOP_HIT(AXIS, MINMAX) SBI(hit_state, _ENDSTOP(AXIS, MINMAX))
 
   // Call the endstop triggered routine for single endstops
-  #define PROCESS_ENDSTOP(AXIS, MINMAX) do { \
+  /*#define PROCESS_ENDSTOP(AXIS, MINMAX) do { \
     if ((TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX)) && (_AXIS(AXIS) == X_AXIS)) || \
         (ENDSTOP_CHANGED(_ENDSTOP(AXIS, MINMAX)) && ((_AXIS(AXIS) == Y_AXIS) || (_AXIS(AXIS) == Z_AXIS)))) { \
       _ENDSTOP_HIT(AXIS, MINMAX); \
       planner.endstop_triggered(_AXIS(AXIS)); \
     } \
   } while(0)
-
+  */
+  /*
+  #define PROCESS_ENDSTOP(AXIS, MINMAX) do { \
+    if TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX)){ \
+      _ENDSTOP_HIT(AXIS, MINMAX); \
+      planner.endstop_triggered(_AXIS(AXIS)); \
+    } \
+  } while(0)
+  */
+  #define PROCESS_ENDSTOP(AXIS, MINMAX) do { \
+    if ENDSTOP_CHANGED(_ENDSTOP(AXIS, MINMAX)){ \
+      _ENDSTOP_HIT(AXIS, MINMAX); \
+      planner.endstop_triggered(_AXIS(AXIS)); \
+    } \
+  } while(0)
+  
+  
   // Core Sensorless Homing needs to test an Extra Pin
   #define CORE_DIAG(QQ,A,MM) (CORE_IS_##QQ && A##_SENSORLESS && !A##_SPI_SENSORLESS && HAS_##A##_##MM)
   #define PROCESS_CORE_ENDSTOP(A1,M1,A2,M2) do { \
@@ -1141,6 +1158,7 @@ void Endstops::update() {
   // Signal, after validation, if an endstop limit is pressed or not
 
   if (stepper.axis_is_moving(X_AXIS)) {
+
 
       #if HAS_X_MIN || (X_SPI_SENSORLESS && X_HOME_TO_MIN)
         PROCESS_ENDSTOP_X(MIN);
@@ -1246,8 +1264,8 @@ void Endstops::update() {
     }
   #endif
 
-  old_live_state = live_state;
-  endstop_changed = 0;
+  //old_live_state = live_state;
+  //endstop_changed = 0;
 
 }
 

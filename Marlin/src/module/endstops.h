@@ -131,6 +131,9 @@ class Endstops {
     static bool enabled, enabled_globally;
     static endstop_mask_t live_state;
     static volatile endstop_mask_t hit_state; // Use X_MIN, Y_MIN, Z_MIN and Z_MIN_PROBE as BIT index
+      // sledování změny endstopu
+    static endstop_mask_t old_live_state;
+    static endstop_mask_t endstop_changed;
 
     #if ENDSTOP_NOISE_THRESHOLD
       static endstop_mask_t validated_live_state;
@@ -188,7 +191,12 @@ class Endstops {
         #endif
       ;
     }
-
+    FORCE_INLINE static endstop_mask_t change_state() {
+      endstop_changed = old_live_state ^ live_state;
+      old_live_state = live_state;
+      return endstop_changed;
+    }
+    
     static bool probe_switch_activated() {
       return (true
         #if ENABLED(PROBE_ACTIVATION_SWITCH)
