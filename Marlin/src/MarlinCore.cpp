@@ -1645,8 +1645,9 @@ void setup() {
 
   pinMode(PE7, OUTPUT);
   pinMode(PE8, OUTPUT);
-  digitalWrite(PE7, HIGH);
-  digitalWrite(PE8, HIGH);
+  extDigitalWrite(PE7, HIGH);
+  extDigitalWrite(PE8, HIGH);
+
 
   marlin_state = MF_RUNNING;
 
