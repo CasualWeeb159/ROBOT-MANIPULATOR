@@ -426,7 +426,10 @@ void set_axis_is_at_home(const AxisEnum axis);
    *   Cleared whenever a stepper powers off, potentially losing its position.
    */
   extern main_axes_bits_t axes_homed, axes_trusted;
-  void homeaxis(const AxisEnum axis);
+  bool endstop_pressed(const AxisEnum axis);
+  void set_axis_home(const AxisEnum axis);
+  bool is_axis_home_(const AxisEnum axis);
+  void homeaxis(const AxisEnum axis, bool final_home);
   void set_axis_never_homed(const AxisEnum axis);
   main_axes_bits_t axes_should_home(main_axes_bits_t axes_mask=main_axes_mask);
   bool homing_needed_error(main_axes_bits_t axes_mask=main_axes_mask);

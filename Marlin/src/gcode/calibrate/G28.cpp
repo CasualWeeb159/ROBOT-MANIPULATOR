@@ -67,48 +67,6 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../core/debug_out.h"
 
-#if ENABLED(QUICK_HOME)
-
-  static void quick_home_xy() {
-
-    // Pretend the current position is 0,0
-    current_position.set(0.0, 0.0);
-    sync_plan_position();
-
-    const int x_axis_home_dir = TOOL_X_HOME_DIR(active_extruder);
-
-    // Use a higher diagonal feedrate so axes move at homing speed
-    const float minfr = _MIN(homing_feedrate(X_AXIS), homing_feedrate(Y_AXIS)),
-                fr_mm_s = HYPOT(minfr, minfr);
-
-    #if ENABLED(SENSORLESS_HOMING)
-      sensorless_t stealth_states {
-        NUM_AXIS_LIST(
-          TERN0(X_SENSORLESS, tmc_enable_stallguard(stepperX)),
-          TERN0(Y_SENSORLESS, tmc_enable_stallguard(stepperY)),
-          false, false, false, false
-        )
-        , TERN0(X2_SENSORLESS, tmc_enable_stallguard(stepperX2))
-        , TERN0(Y2_SENSORLESS, tmc_enable_stallguard(stepperY2))
-      };
-    #endif
-
-    do_blocking_move_to_xy(1.5 * max_length(X_AXIS) * x_axis_home_dir, 1.5 * max_length(Y_AXIS) * Y_HOME_DIR, fr_mm_s);
-
-    endstops.validate_homing_move();
-
-    current_position.set(0.0, 0.0);
-
-    #if ENABLED(SENSORLESS_HOMING) && DISABLED(ENDSTOPS_ALWAYS_ON_DEFAULT)
-      TERN_(X_SENSORLESS, tmc_disable_stallguard(stepperX, stealth_states.x));
-      TERN_(X2_SENSORLESS, tmc_disable_stallguard(stepperX2, stealth_states.x2));
-      TERN_(Y_SENSORLESS, tmc_disable_stallguard(stepperY, stealth_states.y));
-      TERN_(Y2_SENSORLESS, tmc_disable_stallguard(stepperY2, stealth_states.y2));
-    #endif
-  }
-
-#endif // QUICK_HOME
-
 #if ENABLED(Z_SAFE_HOMING)
 
   inline void home_z_safely() {
@@ -310,25 +268,23 @@ void GcodeSuite::G28() {
       TERN_(BLTOUCH, bltouch.init());
     }
 
-bool B_ENDSTOP = extDigitalRead(PG9);
+  homeaxis(A_AXIS, true);
 
-  SERIAL_ECHOLNPGM("HOMING A [G28--316]");
-  homeaxis(A_AXIS);
-  set_axis_is_at_home(A_AXIS);
-
-  if (B_ENDSTOP == false) {
-    SERIAL_ECHOLNPGM("HOMING C (mezikrok před konečným homováním[G28--320]");
-    homeaxis(C_AXIS);
+  if (!endstop_pressed(B_AXIS)) {
+    homeaxis(C_AXIS,false);
+    do {
+      homeaxis(B_AXIS,true);
+      homeaxis(C_AXIS,is_axis_home_(B_AXIS));
+    } while (!is_axis_home_(B_AXIS));
+  } 
+  else{
+    homeaxis(B_AXIS,true);
+    homeaxis(C_AXIS,true);
   }
 
-  SERIAL_ECHOLNPGM("HOMING B [G28--318]");
-  homeaxis(B_AXIS);
+  set_axis_is_at_home(A_AXIS);
   set_axis_is_at_home(B_AXIS);
-  
-  SERIAL_ECHOLNPGM("HOMING C [G28--320]");
-  homeaxis(C_AXIS);
   set_axis_is_at_home(C_AXIS);
-
   sync_plan_position();
 
   /**

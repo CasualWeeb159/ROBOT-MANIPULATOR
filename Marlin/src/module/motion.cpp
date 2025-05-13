@@ -1561,7 +1561,7 @@ void prepare_line_to_destination() {
 
     planner.synchronize();
 
-    endstops.validate_homing_move();
+    endstops.validate_homing_move(axis);
  
   }
 
@@ -1591,39 +1591,57 @@ void prepare_line_to_destination() {
    * Kinematic robots should wait till all axes are homed
    * before updating the current position.
    */
+  
+  static bool A_AXIS_HOME = false;
+  static bool B_AXIS_HOME = false;
+  static bool C_AXIS_HOME = false;
 
-  void homeaxis(const AxisEnum axis) {
+  bool B_HOMING_MISSED = false;
 
-    static bool B_ENDSTOP = extDigitalRead(PG9);
-    static bool C_ENDSTOP = extDigitalRead(PG10);
+  bool endstop_pressed(const AxisEnum axis){
+    switch (axis){
+      case A_AXIS: return extDigitalRead(PG6);
+      case B_AXIS: return extDigitalRead(PG9);
+      case C_AXIS: return extDigitalRead(PG10);
+      default: return false;
+    }
+  }
 
-    SERIAL_ECHOLNPGM("B_ENDSTOP je ", B_ENDSTOP, " a C_ENDSTOP je ", C_ENDSTOP);
+  void set_axis_home(const AxisEnum axis){
+    switch (axis){
+      case A_AXIS: A_AXIS_HOME = true; break;
+      case B_AXIS: B_AXIS_HOME = true; break;
+      case C_AXIS: C_AXIS_HOME = true; break;
+      default: break;
+    }
+  }
+  bool is_axis_home_(const AxisEnum axis){
+    switch (axis){
+      case A_AXIS: return A_AXIS_HOME;
+      case B_AXIS: return B_AXIS_HOME;
+      case C_AXIS: return C_AXIS_HOME;
+      default: return false;
+    }
+  }
 
-    int axis_home_dir;
+  void homeaxis(const AxisEnum axis, bool final_home) {
+
+    bool endstop = endstop_pressed(axis);
+
+    SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
+
+    int axis_home_dir = endstop ? -1 : 1;
+    const int B_closing_step = 35;
+ 
     float move_length;
     switch (axis) {
-      case A_AXIS: {
-        axis_home_dir = -1;
-        //move_length = 360 * axis_home_dir;
-        move_length = 30 * axis_home_dir;
-      }break;
-      case B_AXIS: {
-
-        if (!B_ENDSTOP) axis_home_dir = 1;
-        else axis_home_dir = -1;
-        //move_length = 360 * axis_home_dir;
-        move_length = 30 * axis_home_dir;
-      }break;
-      case C_AXIS: {
-        if (!C_ENDSTOP) axis_home_dir = -1;
-        else axis_home_dir = 1;
-        //move_length = 360 * axis_home_dir;
-        move_length = 30 * axis_home_dir;
-      }break;
+      case A_AXIS: move_length = 360 * axis_home_dir; break;
+      case B_AXIS: move_length = endstop ? 360 * axis_home_dir : B_closing_step * axis_home_dir; break;
+      case C_AXIS: move_length = 360 * -axis_home_dir; break;
       default: return;
     }
     // Determine if a homing bump will be done and the bumps distance
-    const float bump = 5 * axis_home_dir; //bump v mm
+    const float bump = 3 * axis_home_dir; //bump v mm
 
     //
     // Fast move towards endstop until triggered
@@ -1633,7 +1651,9 @@ void prepare_line_to_destination() {
     do_homing_move(axis, move_length, 0.0, false);
 
     // If a second homing move is configured...
-    if (bump) {
+    if (!final_home) return;
+    if (B_HOMING_MISSED) return;
+    if (!bump) return;
 
       endstops.not_homing();
       // Move away from the endstop by the axis HOMING_BUMP_MM
@@ -1648,9 +1668,8 @@ void prepare_line_to_destination() {
       const float rebump = bump * 2;
       SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
       do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
-    }
 
-
+      set_axis_home(axis);
 
   } // homeaxis()
 
