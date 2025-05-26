@@ -1182,6 +1182,11 @@ void setup() {
   #endif
   SERIAL_ECHOLNPGM("start");
 
+  pinMode(PE7, OUTPUT);
+  pinMode(PE8, OUTPUT);
+  extDigitalWrite(PE7, HIGH);
+  extDigitalWrite(PE8, HIGH);
+
   // Set up these pins early to prevent suicide
   #if HAS_KILL
     SETUP_LOG("KILL_PIN");
@@ -1642,12 +1647,6 @@ void setup() {
   #if ENABLED(BD_SENSOR)
     SETUP_RUN(bdl.init(I2C_BD_SDA_PIN, I2C_BD_SCL_PIN, I2C_BD_DELAY));
   #endif
-
-  pinMode(PE7, OUTPUT);
-  pinMode(PE8, OUTPUT);
-  extDigitalWrite(PE7, HIGH);
-  extDigitalWrite(PE8, HIGH);
-
 
   marlin_state = MF_RUNNING;
 
