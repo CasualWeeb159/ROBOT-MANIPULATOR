@@ -3287,12 +3287,12 @@ void Planner::set_machine_position_mm(const abce_pos_t &abce) {
   }
 }
 
-void Planner::set_position_mm(const xyze_pos_t &xyze) {
+void Planner::set_position_mm(const xyze_pos_t &xyze, bool check_translation) {
   xyze_pos_t machine = xyze;
   TERN_(HAS_POSITION_MODIFIERS, apply_modifiers(machine, true));
   #if IS_KINEMATIC
     position_cart = xyze;
-    inverse_kinematics(machine);
+    inverse_kinematics(machine,false,!check_translation);
     TERN_(HAS_EXTRUDERS, delta.e = machine.e);
     set_machine_position_mm(delta);
   #else

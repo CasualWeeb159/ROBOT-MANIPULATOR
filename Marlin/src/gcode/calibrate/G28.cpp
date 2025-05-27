@@ -270,7 +270,8 @@ void GcodeSuite::G28() {
 
   homeaxis(A_AXIS, true);
 
-  if (!endstop_pressed(B_AXIS)) {
+  if (endstop_pressed(B_AXIS)) {
+    SERIAL_ECHOLNPGM("Jsem v homing loopu");
     homeaxis(C_AXIS,false);
     do {
       homeaxis(B_AXIS,true);
@@ -278,6 +279,7 @@ void GcodeSuite::G28() {
     } while (!is_axis_home_(B_AXIS));
   } 
   else{
+    SERIAL_ECHOLNPGM("Nejsem v homing loopu");
     homeaxis(B_AXIS,true);
     homeaxis(C_AXIS,true);
   }

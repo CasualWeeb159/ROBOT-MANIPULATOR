@@ -309,7 +309,7 @@ void quickstop_stepper();
  * Set the planner/stepper positions directly from current_position with
  * no kinematic translation. Used for homing axes and cartesian/core syncing.
  */
-void sync_plan_position();
+void sync_plan_position(bool check_translation = true);
 
 #if HAS_EXTRUDERS
   void sync_plan_position_e();

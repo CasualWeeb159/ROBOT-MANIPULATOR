@@ -231,7 +231,7 @@ void report_real_position() {
 // Report the logical current position according to the most recent G-code command
 void report_current_position() {
   report_logical_position(current_position);
-  report_more_positions();
+  //report_more_positions();
 }
 
 /**
@@ -406,9 +406,9 @@ void quickstop_stepper() {
  * Set the planner/stepper positions directly from current_position with
  * no kinematic translation. Used for homing axes and cartesian/core syncing.
  */
-void sync_plan_position() {
+void sync_plan_position(bool check_translation) {
   if (DEBUGGING(LEVELING)) DEBUG_POS("sync_plan_position", current_position);
-  planner.set_position_mm(current_position);
+  planner.set_position_mm(current_position, check_translation);
 }
 
 #if HAS_EXTRUDERS
@@ -1537,21 +1537,21 @@ void prepare_line_to_destination() {
     const feedRate_t home_fr_mm_s = fr_mm_s ?: homing_feedrate(X_AXIS);
 
     switch (axis) {
-      case A_AXIS: delta.a = 0;break;
-      case B_AXIS: delta.b = 0;break;
-      case C_AXIS: delta.c = 0;break;
+      case A_AXIS: delta.a = 0; break;
+      case B_AXIS: delta.b = 0; break;
+      case C_AXIS: delta.c = 30; break;
       default: return;
     }
 
     forward_kinematics(delta.a, delta.b, delta.c);
     current_position = cartes;
     report_current_position();
-    sync_plan_position();
+    sync_plan_position(false);
 
     switch (axis) {
-      case A_AXIS: delta.a = distance;break;
-      case B_AXIS: delta.b = distance;break;
-      case C_AXIS: delta.c = distance;break;
+      case A_AXIS: delta.a = distance; break;
+      case B_AXIS: delta.b = distance; break;
+      case C_AXIS: delta.c = distance + 30; break;
       default: return;
     }
     forward_kinematics(delta.a, delta.b, delta.c);
@@ -1627,44 +1627,47 @@ void prepare_line_to_destination() {
   void homeaxis(const AxisEnum axis, bool final_home) {
 
     bool endstop = endstop_pressed(axis);
+    B_HOMING_MISSED = false;
 
     SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
 
-    int axis_home_dir = endstop ? -1 : 1;
     const int B_closing_step = 35;
  
     float move_length;
+
     switch (axis) {
-      case A_AXIS: move_length = 360 * axis_home_dir; break;
-      case B_AXIS: move_length = endstop ? 360 * axis_home_dir : B_closing_step * axis_home_dir; break;
-      case C_AXIS: move_length = 360 * -axis_home_dir; break;
+      case A_AXIS: move_length = endstop ? 179 : -179; break;
+      case B_AXIS: move_length = endstop ? B_closing_step : -50; break;
+      case C_AXIS: move_length = endstop ? -170 : 170; break;
       default: return;
     }
+
     // Determine if a homing bump will be done and the bumps distance
-    const float bump = 3 * axis_home_dir; //bump v mm
+    const float bump = 3 * move_length/abs(move_length); //bump v mm
 
     //
     // Fast move towards endstop until triggered
     //
-    SERIAL_ECHOLNPGM("RYCHLÝ POHYB K ENDSTOPU [motion.cpp--2001]");
     SERIAL_ECHOLNPGM("Home Fast: ", move_length, "mm");
     do_homing_move(axis, move_length, 0.0, false);
 
     // If a second homing move is configured...
-    if (!final_home) return;
-    if (B_HOMING_MISSED) return;
-    if (!bump) return;
-
+    if (!final_home){
+      SERIAL_ECHOLNPGM("Není final_home");
+      return;
+    }
+    if (B_HOMING_MISSED){
+      SERIAL_ECHOLNPGM("B_HOMING_MISSED");
+      return;
+    }
       endstops.not_homing();
       // Move away from the endstop by the axis HOMING_BUMP_MM
-      SERIAL_ECHOLNPGM("RYCHLÝ POHYB OD ENDSTOPU [motion.cpp--2009]");
       SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
       do_homing_move(axis, -bump, 0.0, false);
 
       endstops.enable(true);
 
       // Slow move towards endstop until triggered
-      SERIAL_ECHOLNPGM("POMALÝ POHYB K ENDSTOPU [motion.cpp--2014]");
       const float rebump = bump * 2;
       SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
       do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);

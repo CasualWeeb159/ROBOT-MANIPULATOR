@@ -878,7 +878,7 @@ class Planner {
      *
      * Clears previous speed values.
      */
-    static void set_position_mm(const xyze_pos_t &xyze);
+    static void set_position_mm(const xyze_pos_t &xyze, bool check_translation = true);
 
     #if HAS_EXTRUDERS
       static void set_e_position_mm(const_float_t e);
