@@ -208,7 +208,7 @@ inline void report_logical_position(const xyze_pos_t &rpos) {
       , SP_E_LBL, lpos.e
     #endif
   );
-  SERIAL_ECHOLNPGM("Robot angles set to A:", delta.a, " B:", delta.b, " C:", delta.c);
+  SERIAL_ECHOLNPGM(" Robot angles set to A:", delta.a, " B:", delta.b, " C:", delta.c);
 }
 
 // Report the real current position according to the steppers.
@@ -475,11 +475,11 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/, bool check_kinematics) {
+void line_to_current_position(const_feedRate_t fr_mm_s/*=feedrate_mm_s*/, bool move_to_delta) {
 
   PlannerHints ph;
-  ph.movement_possibility_already_checked = true;
-
+  if (move_to_delta) ph.move_to_delta = true;
+  
   planner.buffer_line(current_position, fr_mm_s, active_extruder, ph);
 }
 
@@ -1539,25 +1539,22 @@ void prepare_line_to_destination() {
     switch (axis) {
       case A_AXIS: delta.a = 0; break;
       case B_AXIS: delta.b = 0; break;
-      case C_AXIS: delta.c = 30; break;
+      case C_AXIS: delta.c = 0; break;
       default: return;
     }
 
-    forward_kinematics(delta.a, delta.b, delta.c);
-    current_position = cartes;
+    planner.set_machine_position_mm(delta);
     report_current_position();
-    sync_plan_position(false);
 
     switch (axis) {
       case A_AXIS: delta.a = distance; break;
       case B_AXIS: delta.b = distance; break;
-      case C_AXIS: delta.c = distance + 30; break;
+      case C_AXIS: delta.c = distance; break;
       default: return;
     }
-    forward_kinematics(delta.a, delta.b, delta.c);
-    current_position = cartes;
+
     report_current_position();
-    line_to_current_position(home_fr_mm_s, false);
+    line_to_current_position(home_fr_mm_s, true);
 
     planner.synchronize();
 
@@ -1615,6 +1612,13 @@ void prepare_line_to_destination() {
       default: break;
     }
   }
+
+  void all_axis_unhomed(){
+    A_AXIS_HOME = false;
+    B_AXIS_HOME = false;
+    C_AXIS_HOME = false;
+  }
+
   bool is_axis_home_(const AxisEnum axis){
     switch (axis){
       case A_AXIS: return A_AXIS_HOME;
@@ -1637,8 +1641,8 @@ void prepare_line_to_destination() {
 
     switch (axis) {
       case A_AXIS: move_length = endstop ? 179 : -179; break;
-      case B_AXIS: move_length = endstop ? B_closing_step : -50; break;
-      case C_AXIS: move_length = endstop ? -170 : 170; break;
+      case B_AXIS: move_length = endstop ? B_closing_step : -179; break;
+      case C_AXIS: move_length = endstop ? -179 : 170; break;
       default: return;
     }
 

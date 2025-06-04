@@ -225,49 +225,9 @@ void GcodeSuite::G28() {
 
   endstops.enable(true); // Enable endstops for next homing move
 
-    #define _UNSAFE(A) (homeZ && TERN0(Z_SAFE_HOMING, axes_should_home(_BV(A##_AXIS))))
-
-    const bool homeZ = TERN0(HAS_Z_AXIS, parser.seen_test('Z')),
-               NUM_AXIS_LIST(              // Other axes should be homed before Z safe-homing
-                 needX = _UNSAFE(X), needY = _UNSAFE(Y), needZ = false, // UNUSED
-                 needI = _UNSAFE(I), needJ = _UNSAFE(J), needK = _UNSAFE(K),
-                 needU = _UNSAFE(U), needV = _UNSAFE(V), needW = _UNSAFE(W)
-               ),
-               NUM_AXIS_LIST(              // Home each axis if needed or flagged
-                 homeX = needX || parser.seen_test('X'),
-                 homeY = needY || parser.seen_test('Y'),
-                 homeZZ = homeZ,
-                 homeI = needI || parser.seen_test(AXIS4_NAME), homeJ = needJ || parser.seen_test(AXIS5_NAME),
-                 homeK = needK || parser.seen_test(AXIS6_NAME), homeU = needU || parser.seen_test(AXIS7_NAME),
-                 homeV = needV || parser.seen_test(AXIS8_NAME), homeW = needW || parser.seen_test(AXIS9_NAME)
-               ),
-               home_all = NUM_AXIS_GANG(   // Home-all if all or none are flagged
-                    homeX == homeX, && homeY == homeX, && homeZ == homeX,
-                 && homeI == homeX, && homeJ == homeX, && homeK == homeX,
-                 && homeU == homeX, && homeV == homeX, && homeW == homeX
-               ),
-               NUM_AXIS_LIST(
-                 doX = home_all || homeX, doY = home_all || homeY, doZ = home_all || homeZ,
-                 doI = home_all || homeI, doJ = home_all || homeJ, doK = home_all || homeK,
-                 doU = home_all || homeU, doV = home_all || homeV, doW = home_all || homeW
-               );
-
-    #if HAS_Z_AXIS
-      UNUSED(needZ); UNUSED(homeZZ);
-    #else
-      constexpr bool doZ = false;
-    #endif
-
-    const bool seenR = parser.seenval('R');
-    const float z_homing_height = seenR ? parser.value_linear_units() : Z_HOMING_HEIGHT;
-
-    if (z_homing_height && (seenR || NUM_AXIS_GANG(doX, || doY, || TERN0(Z_SAFE_HOMING, doZ), || doI, || doJ, || doK, || doU, || doV, || doW))) {
-      // Raise Z before homing any other axes and z is not already high enough (never lower z)
-      if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Raise Z (before homing) by ", z_homing_height);
-      do_z_clearance(z_homing_height);
-      TERN_(BLTOUCH, bltouch.init());
-    }
-
+  //Příprava na HOMING manévr
+  all_axis_unhomed();
+  
   homeaxis(A_AXIS, true);
 
   if (endstop_pressed(B_AXIS)) {
@@ -319,9 +279,6 @@ void GcodeSuite::G28() {
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingDone());
 
   report_current_position();
-
-  if (ENABLED(NANODLP_Z_SYNC) && (doZ || ENABLED(NANODLP_ALL_AXIS)))
-    SERIAL_ECHOLNPGM(STR_Z_MOVE_COMP);
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(old_grblstate));
 

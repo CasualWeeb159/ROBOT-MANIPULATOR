@@ -319,7 +319,7 @@ void sync_plan_position(bool check_translation = true);
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s, bool check_kinematics = true);
+void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s, bool move_to_delta = false);
 
 #if HAS_EXTRUDERS
   void unscaled_e_move(const_float_t length, const_feedRate_t fr_mm_s);
@@ -428,6 +428,7 @@ void set_axis_is_at_home(const AxisEnum axis);
   extern main_axes_bits_t axes_homed, axes_trusted;
   bool endstop_pressed(const AxisEnum axis);
   void set_axis_home(const AxisEnum axis);
+  void all_axis_unhomed();
   bool is_axis_home_(const AxisEnum axis);
   void homeaxis(const AxisEnum axis, bool final_home);
   void set_axis_never_homed(const AxisEnum axis);

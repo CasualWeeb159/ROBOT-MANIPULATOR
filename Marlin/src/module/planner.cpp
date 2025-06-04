@@ -3133,9 +3133,9 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
   , const uint8_t extruder/*=active_extruder*/
   , const PlannerHints &hints/*=PlannerHints()*/
 ) {
-  xyze_pos_t machine = cart;
-  TERN_(HAS_POSITION_MODIFIERS, apply_modifiers(machine));
 
+  xyze_pos_t machine = cart;
+  
   #if IS_KINEMATIC
 
     #if HAS_JUNCTION_DEVIATION
@@ -3153,16 +3153,18 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
       );
     #endif
     PlannerHints ph = hints;
-    // Cartesian XYZ to kinematic ABC, stored in global 'delta'
-    inverse_kinematics(machine, false, ph.movement_possibility_already_checked);
 
-    if (kinematic_calc_failiure == true){
-      kinematic_calc_failiure = false;
-      //SERIAL_ECHOLNPGM("Zabráněno nemožnému pohybu v planner.cpp buffer_line()");
-      return false;
+    if (!ph.move_to_delta){ //Vykašleme se na cart a frknem tam rovnou deltu. Musí být nastavena předem.
+      // Cartesian XYZ to kinematic ABC, stored in global 'delta'
+      inverse_kinematics(machine, false, ph.movement_possibility_already_checked);
+
+      if (kinematic_calc_failiure == true){
+        kinematic_calc_failiure = false;
+        //SERIAL_ECHOLNPGM("Zabráněno nemožnému pohybu v planner.cpp buffer_line()");
+        return false;
+      }
     }
 
-    
     if (!hints.millimeters)
       ph.millimeters = (cart_dist_mm.x || cart_dist_mm.y)
         ? xyz_pos_t(cart_dist_mm).magnitude()

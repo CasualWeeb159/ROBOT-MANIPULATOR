@@ -371,6 +371,7 @@ struct PlannerHints {
                                       // would calculate if it knew the as-yet-unbuffered path
   #endif
   bool movement_possibility_already_checked = false; // Flag to indicate that the planner has already checked the possibility of movement
+  bool move_to_delta = false;
 
   PlannerHints(const_float_t mm=0.0f) : millimeters(mm) {}
 };
