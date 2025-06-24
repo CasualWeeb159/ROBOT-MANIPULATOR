@@ -1187,6 +1187,7 @@ void setup() {
   extDigitalWrite(PE7, HIGH);
   extDigitalWrite(PE8, HIGH);
 
+
   // Set up these pins early to prevent suicide
   #if HAS_KILL
     SETUP_LOG("KILL_PIN");

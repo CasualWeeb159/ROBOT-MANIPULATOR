@@ -127,12 +127,12 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
 
     const xyz_pos_t spos = raw;
 
-    SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
-    SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
+    //ERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
+    //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
     
     if ((extDigitalRead(71) == LOW) || (extDigitalRead(72) == LOW)) {
       kinematic_calc_failiure = true;
-      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na automatické ovládání pomocí příkazu M50 S1");
+      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na automatické ovládání pomocí příkazu M50 S0");
       return;
     }
 
