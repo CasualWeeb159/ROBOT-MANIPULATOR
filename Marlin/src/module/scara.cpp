@@ -125,8 +125,16 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     {
     float alfa, alfares, beta, gamma, received_x,received_y,received_z, d1, d2, beta1, beta2, o1;
 
-    
     const xyz_pos_t spos = raw;
+
+    //ERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
+    //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
+    
+    if ((extDigitalRead(71) == LOW) || (extDigitalRead(72) == LOW)) {
+      kinematic_calc_failiure = true;
+      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na automatické ovládání pomocí příkazu M50 S0");
+      return;
+    }
 
     if (!already_checked && !are_xyz_coordinates_possible(spos.x, spos.y, spos.z)){
       kinematic_calc_failiure = true;
@@ -137,9 +145,6 @@ bool are_xyz_coordinates_possible(const_float_t &x, const_float_t &y, const_floa
     received_x = spos.x + 0.0001;
     received_y = spos.y + 0.0001;
     received_z = spos.z + lz;
-
-    //SERIAL_ECHOLNPGM("jede z  x:", current_position.x, " y:",current_position.y," z:",current_position.z + lz);
-    //SERIAL_ECHOLNPGM("jede do x:", received_x, " y:",received_y," z:",received_z);
 
     alfares = atan2(-received_y, received_x);
     d1 = (-received_y)/(sin(alfares)) -lx;
