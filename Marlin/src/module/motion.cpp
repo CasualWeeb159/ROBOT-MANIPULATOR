@@ -1532,9 +1532,13 @@ void prepare_line_to_destination() {
   /**
    * Home an individual linear axis
    */
-  void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t fr_mm_s=0.0, const bool final_approach=true) {
+  void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t fr_mm_s=0.0, const bool final_approach=true, bool BC_homing = false) {
 
     const feedRate_t home_fr_mm_s = fr_mm_s ?: homing_feedrate(X_AXIS);
+
+    if (BC_homing){
+      delta.c = 0;
+    }
 
     switch (axis) {
       case A_AXIS: delta.a = 0; break;
@@ -1546,6 +1550,9 @@ void prepare_line_to_destination() {
     planner.set_machine_position_mm(delta);
     report_current_position();
 
+    if (BC_homing){
+      delta.c = distance;
+    }
     switch (axis) {
       case A_AXIS: delta.a = distance; break;
       case B_AXIS: delta.b = distance; break;
@@ -1597,9 +1604,9 @@ void prepare_line_to_destination() {
 
   bool endstop_pressed(const AxisEnum axis){
     switch (axis){
-      case A_AXIS: return extDigitalRead(PG6);
-      case B_AXIS: return extDigitalRead(PG9);
-      case C_AXIS: return extDigitalRead(PG10);
+      case A_AXIS: return !extDigitalRead(PG6);
+      case B_AXIS: return !extDigitalRead(PG9);
+      case C_AXIS: return !extDigitalRead(PG10);
       default: return false;
     }
   }
@@ -1628,33 +1635,33 @@ void prepare_line_to_destination() {
     }
   }
 
-  void homeaxis(const AxisEnum axis, bool final_home) {
+  void homeaxis(const AxisEnum axis, bool final_home, bool BC_homing) {
 
     bool endstop = endstop_pressed(axis);
     B_HOMING_MISSED = false;
 
     SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
 
-    const int B_closing_step = 35;
- 
     float move_length;
 
     switch (axis) {
-      case A_AXIS: move_length = endstop ? 179 : -179; break;
-      case B_AXIS: move_length = endstop ? B_closing_step : -179; break;
-      case C_AXIS: move_length = endstop ? -179 : 170; break;
+      case A_AXIS: move_length = endstop ? -179 : 179; break;
+      case B_AXIS: move_length = endstop ? -179 : 179; break;
+      case C_AXIS: move_length = endstop ? 179 : -170; break;
       default: return;
     }
 
     // Determine if a homing bump will be done and the bumps distance
-    const float bump = 3 * move_length/abs(move_length); //bump v mm
+    const float bump = 3;
 
     //
     // Fast move towards endstop until triggered
     //
-    SERIAL_ECHOLNPGM("Home Fast: ", move_length, "mm");
-    do_homing_move(axis, move_length, 0.0, false);
-
+    if (!is_axis_home_(axis)){
+      SERIAL_ECHOLNPGM("Home Fast: ", move_length, "mm");
+      do_homing_move(axis, move_length, 0.0, false, BC_homing);
+    }
+  
     // If a second homing move is configured...
     if (!final_home){
       SERIAL_ECHOLNPGM("Není final_home");
@@ -1664,19 +1671,19 @@ void prepare_line_to_destination() {
       SERIAL_ECHOLNPGM("B_HOMING_MISSED");
       return;
     }
-      endstops.not_homing();
-      // Move away from the endstop by the axis HOMING_BUMP_MM
-      SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
-      do_homing_move(axis, -bump, 0.0, false);
+    endstops.not_homing();
+    // Move away from the endstop by the axis HOMING_BUMP_MM
+    SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
+    do_homing_move(axis, -bump, 0.0, false);
 
-      endstops.enable(true);
+    endstops.enable(true);
 
-      // Slow move towards endstop until triggered
-      const float rebump = bump * 2;
-      SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
-      do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
+    // Slow move towards endstop until triggered
+    const float rebump = bump * 2;
+    SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
+    do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
 
-      set_axis_home(axis);
+    set_axis_home(axis);
 
   } // homeaxis()
 

@@ -459,7 +459,6 @@ void Endstops::not_homing() {
   void Endstops::validate_homing_move(const AxisEnum axis) {
     if (trigger_state()) hit_on_purpose();
     else {
-      if (axis == B_AXIS) B_HOMING_MISSED = true;
       //kill(GET_TEXT_F(MSG_KILL_HOMING_FAILED))
       SERIAL_ECHOLNPGM("Během do_homing_move() se nestisknul endstop");
     };
@@ -1160,6 +1159,8 @@ void Endstops::update() {
 
   // Signal, after validation, if an endstop limit is pressed or not
 
+  extern bool BC_endstol_check;
+
   if (stepper.axis_is_moving(X_AXIS)) {
 
 
@@ -1193,7 +1194,7 @@ void Endstops::update() {
   }
 
   #if HAS_Y_AXIS
-    if (stepper.axis_is_moving(Y_AXIS)) {
+    if ((stepper.axis_is_moving(Y_AXIS)) || (BC_endstol_check)) {
 
         #if HAS_Y_MIN || (Y_SPI_SENSORLESS && Y_HOME_TO_MIN)
           PROCESS_ENDSTOP_Y(MIN);
@@ -1226,7 +1227,7 @@ void Endstops::update() {
   #endif
 
   #if HAS_Z_AXIS
-    if (stepper.axis_is_moving(Z_AXIS)) {
+    if ((stepper.axis_is_moving(Z_AXIS)) || (BC_endstol_check)) {
 
         #if HAS_Z_MIN || (Z_SPI_SENSORLESS && Z_HOME_TO_MIN)
           if ( TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled)

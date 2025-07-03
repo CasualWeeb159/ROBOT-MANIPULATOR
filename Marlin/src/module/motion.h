@@ -430,7 +430,7 @@ void set_axis_is_at_home(const AxisEnum axis);
   void set_axis_home(const AxisEnum axis);
   void all_axis_unhomed();
   bool is_axis_home_(const AxisEnum axis);
-  void homeaxis(const AxisEnum axis, bool final_home);
+  void homeaxis(const AxisEnum axis, bool final_home, bool B_C_homing = false);
   void set_axis_never_homed(const AxisEnum axis);
   main_axes_bits_t axes_should_home(main_axes_bits_t axes_mask=main_axes_mask);
   bool homing_needed_error(main_axes_bits_t axes_mask=main_axes_mask);

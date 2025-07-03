@@ -160,6 +160,9 @@
  *  Y   Home to the Y endstop
  *  Z   Home to the Z endstop
  */
+
+bool BC_endstol_check = false;
+
 void GcodeSuite::G28() {
   DEBUG_SECTION(log_G28, "G28", DEBUGGING(LEVELING));
   if (DEBUGGING(LEVELING)) log_machine_info();
@@ -227,9 +230,41 @@ void GcodeSuite::G28() {
 
   //Příprava na HOMING manévr
   all_axis_unhomed();
+  int loop_counter = 0;
   
   homeaxis(A_AXIS, true);
 
+  while (!is_axis_home_(B_AXIS))
+  {
+    loop_counter =+ 1;
+    if (endstop_pressed(B_AXIS)){
+      homeaxis(B_AXIS,false);
+      set_axis_home(B_AXIS);
+    }
+    else if (!endstop_pressed(B_AXIS) && (!endstop_pressed(C_AXIS)))
+    {
+      BC_endstol_check = true;
+      homeaxis(B_AXIS,false);
+      BC_endstol_check = false;
+    }
+    else if (!endstop_pressed(B_AXIS) && (endstop_pressed(C_AXIS)))
+    {
+      homeaxis(B_AXIS,false,true);
+      set_axis_home(B_AXIS);
+    }
+    if (loop_counter>10) {
+      SERIAL_ECHOLNPGM("Infinite loop");
+      break;
+    }
+  }
+  
+  homeaxis(C_AXIS,false);
+  set_axis_home(C_AXIS);
+
+  // Homing načisto
+  homeaxis(B_AXIS,true);
+  homeaxis(C_AXIS,true);
+  /*
   if (endstop_pressed(B_AXIS)) {
     SERIAL_ECHOLNPGM("Jsem v homing loopu");
     homeaxis(C_AXIS,false);
@@ -243,7 +278,7 @@ void GcodeSuite::G28() {
     homeaxis(B_AXIS,true);
     homeaxis(C_AXIS,true);
   }
-
+  */
   set_axis_is_at_home(A_AXIS);
   set_axis_is_at_home(B_AXIS);
   set_axis_is_at_home(C_AXIS);
