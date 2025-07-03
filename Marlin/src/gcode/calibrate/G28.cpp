@@ -169,6 +169,11 @@ void GcodeSuite::G28() {
 
   TERN_(BD_SENSOR, bdl.config_state = 0);
 
+  if ((extDigitalRead(71) == LOW) || (extDigitalRead(72) == LOW)) {
+      SERIAL_ECHOLNPGM("Prosím přeněte brzdy obou ramen na automatické ovládání pomocí příkazu M50 S0");
+      return;
+  }
+
   /**
    * Set the laser power to false to stop the planner from processing the current power setting.
    */
@@ -283,6 +288,7 @@ void GcodeSuite::G28() {
   set_axis_is_at_home(B_AXIS);
   set_axis_is_at_home(C_AXIS);
   sync_plan_position();
+  inverse_kinematics(current_position);
 
   /**
    * Preserve DXC mode across a G28 for IDEX printers in DXC_DUPLICATION_MODE.
@@ -313,7 +319,7 @@ void GcodeSuite::G28() {
   TERN_(HAS_DWIN_E3V2_BASIC, DWIN_HomingDone());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingDone());
 
-  report_current_position();
+  //report_current_position();
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(old_grblstate));
 
