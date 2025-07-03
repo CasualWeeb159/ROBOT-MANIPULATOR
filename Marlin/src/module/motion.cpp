@@ -1647,7 +1647,7 @@ void prepare_line_to_destination() {
     }
 
     // Determine if a homing bump will be done and the bumps distance
-    const float bump = 3 * move_length/abs(move_length); //bump v mm
+    const float bump = -3; //bump v mm
 
     //
     // Fast move towards endstop until triggered
