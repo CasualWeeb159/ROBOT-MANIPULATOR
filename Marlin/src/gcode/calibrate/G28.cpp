@@ -241,22 +241,28 @@ void GcodeSuite::G28() {
 
   while (!is_axis_home_(B_AXIS))
   {
-    loop_counter =+ 1;
+    
+
+    // Provedení případu [1, -]
     if (endstop_pressed(B_AXIS)){
       homeaxis(B_AXIS,false);
       set_axis_home(B_AXIS);
     }
+    // Provedení případu [0, 0]
     else if (!endstop_pressed(B_AXIS) && (!endstop_pressed(C_AXIS)))
     {
       BC_endstol_check = true;
       homeaxis(B_AXIS,false);
       BC_endstol_check = false;
     }
+    // Provedení případu [0, 1]
     else if (!endstop_pressed(B_AXIS) && (endstop_pressed(C_AXIS)))
     {
       homeaxis(B_AXIS,false,true);
       set_axis_home(B_AXIS);
     }
+    // Pojistka proti zacyklení
+    loop_counter =+ 1;
     if (loop_counter>10) {
       SERIAL_ECHOLNPGM("Infinite loop");
       break;
