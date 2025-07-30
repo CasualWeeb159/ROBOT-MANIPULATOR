@@ -1045,6 +1045,8 @@ void Endstops::update() {
 
   // sledování změny endstopu
 
+  
+
   // Test jestli proběhla změna stavu endstopu
   endstop_mask_t changed = change_state();
   #define ENDSTOP_CHANGED(ENDSTOP) (TEST(changed, ENDSTOP))

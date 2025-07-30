@@ -1635,10 +1635,13 @@ void prepare_line_to_destination() {
     }
   }
 
+  bool final_home_move;
+
   void homeaxis(const AxisEnum axis, bool final_home, bool BC_homing) {
 
     bool endstop = endstop_pressed(axis);
     B_HOMING_MISSED = false;
+    final_home_move = final_home;
 
     SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
 
