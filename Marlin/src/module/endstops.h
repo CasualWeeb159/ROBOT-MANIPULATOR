@@ -137,7 +137,7 @@ class Endstops {
       // sledování změny endstopu
     static endstop_mask_t old_live_state;
     static endstop_mask_t endstop_changed;
-    static uint8_t endstop_poll_count;
+    static int endstop_poll_count;
     
 
     #if ENDSTOP_NOISE_THRESHOLD
@@ -201,6 +201,7 @@ class Endstops {
 
     // Podmínka pro aktivaci dojezdu: platí pouze mimo finální homing, 
     // pokud došlo ke změně stavu a nevypršel časový limit (500 cyklů).
+
     if (!final_home_move && old_live_state != live_state && endstop_poll_count < 500) {
         endstop_poll_count++; // Inkrementace čítače po dobu trvání dojezdu.
         return 0;             // Během dojezdu se změna nehlásí a pohyb pokračuje.

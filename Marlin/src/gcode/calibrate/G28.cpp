@@ -237,7 +237,7 @@ void GcodeSuite::G28() {
   all_axis_unhomed();
   int loop_counter = 0;
   
-  homeaxis(A_AXIS, true);
+  //homeaxis(A_AXIS, true);
 
   while (!is_axis_home_(B_AXIS))
   {

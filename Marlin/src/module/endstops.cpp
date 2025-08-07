@@ -64,6 +64,7 @@ volatile Endstops::endstop_mask_t Endstops::hit_state;
 Endstops::endstop_mask_t Endstops::live_state = 0;
 Endstops::endstop_mask_t Endstops::old_live_state = 0;
 Endstops::endstop_mask_t Endstops::endstop_changed = 0;
+int Endstops::endstop_poll_count = 0;
 
 #if ENABLED(BD_SENSOR)
   bool Endstops::bdp_state; // = false
