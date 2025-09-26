@@ -236,9 +236,7 @@ void GcodeSuite::G28() {
   //Příprava na HOMING manévr
   all_axis_unhomed();
   int loop_counter = 0;
-  
-  homeaxis(A_AXIS, true);
-
+ 
   while (!is_axis_home_(B_AXIS))
   {
     
@@ -273,6 +271,8 @@ void GcodeSuite::G28() {
   set_axis_home(C_AXIS);
 
   // Homing načisto
+   
+  homeaxis(A_AXIS,true);
   homeaxis(B_AXIS,true);
   homeaxis(C_AXIS,true);
   /*
@@ -295,6 +295,7 @@ void GcodeSuite::G28() {
   set_axis_is_at_home(C_AXIS);
   sync_plan_position();
   inverse_kinematics(current_position);
+  report_current_position();
 
   /**
    * Preserve DXC mode across a G28 for IDEX printers in DXC_DUPLICATION_MODE.

@@ -2081,9 +2081,9 @@
 
 // Manually set the home position. Leave these undefined for automatic settings.
 // For DELTA this is the top-center of the Cartesian print volume.
-#define MANUAL_X_HOME_POS 568.11 //598.669
-#define MANUAL_Y_HOME_POS 9.32
-#define MANUAL_Z_HOME_POS 790.10  //712.403
+#define MANUAL_X_HOME_POS 569.2450//598.669
+#define MANUAL_Y_HOME_POS 9.3389
+#define MANUAL_Z_HOME_POS 803.9497  //712.403
 //#define MANUAL_I_HOME_POS 0
 //#define MANUAL_J_HOME_POS 0
 //#define MANUAL_K_HOME_POS 0

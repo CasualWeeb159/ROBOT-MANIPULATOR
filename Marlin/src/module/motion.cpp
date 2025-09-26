@@ -1548,7 +1548,7 @@ void prepare_line_to_destination() {
     }
 
     planner.set_machine_position_mm(delta);
-    report_current_position();
+    //report_current_position();
 
     if (BC_homing){
       delta.c = distance;
@@ -1560,7 +1560,7 @@ void prepare_line_to_destination() {
       default: return;
     }
 
-    report_current_position();
+    //report_current_position();
     line_to_current_position(home_fr_mm_s, true);
 
     planner.synchronize();
@@ -1643,7 +1643,7 @@ void prepare_line_to_destination() {
     B_HOMING_MISSED = false;
     final_home_move = final_home;
 
-    SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
+    //SERIAL_ECHOLNPGM("ENDSTOP osy je ", endstop);
 
     float move_length;
 
@@ -1661,29 +1661,29 @@ void prepare_line_to_destination() {
     // Fast move towards endstop until triggered
     //
     if (!is_axis_home_(axis)){
-      SERIAL_ECHOLNPGM("Home Fast: ", move_length, "mm");
+      //SERIAL_ECHOLNPGM("Home Fast: ", move_length, "mm");
       do_homing_move(axis, move_length, 0.0, false, BC_homing);
     }
   
     // If a second homing move is configured...
     if (!final_home){
-      SERIAL_ECHOLNPGM("Není final_home");
+      //SERIAL_ECHOLNPGM("Není final_home");
       return;
     }
     if (B_HOMING_MISSED){
-      SERIAL_ECHOLNPGM("B_HOMING_MISSED");
+      //SERIAL_ECHOLNPGM("B_HOMING_MISSED");
       return;
     }
     endstops.not_homing();
     // Move away from the endstop by the axis HOMING_BUMP_MM
-    SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
+    //SERIAL_ECHOLNPGM("Move Away: ", -bump, "mm");
     do_homing_move(axis, -bump, 0.0, false);
 
     endstops.enable(true);
 
     // Slow move towards endstop until triggered
     const float rebump = bump * 2;
-    SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
+    //SERIAL_ECHOLNPGM("Re-bump: ", rebump, "mm");
     do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
 
     set_axis_home(axis);
