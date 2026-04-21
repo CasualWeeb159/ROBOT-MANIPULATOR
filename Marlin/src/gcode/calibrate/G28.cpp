@@ -236,6 +236,9 @@ void GcodeSuite::G28() {
   //Příprava na HOMING manévr
   all_axis_unhomed();
   int loop_counter = 0;
+  // Homing z počáteční polohy senzorů [0, 0]
+  // Pokud z [0, 0] přecházíme na [1, 0], nechceme znovu nahrubo homovat B, to už je hotové
+  bool two_zero_home = false;
  
   while (!is_axis_home_(B_AXIS))
   {
@@ -243,12 +246,15 @@ void GcodeSuite::G28() {
 
     // Provedení případu [1, -]
     if (endstop_pressed(B_AXIS)){
-      homeaxis(B_AXIS,false);
+      if (!two_zero_home){
+        homeaxis(B_AXIS,false);
+      }
       set_axis_home(B_AXIS);
     }
     // Provedení případu [0, 0]
     else if (!endstop_pressed(B_AXIS) && (!endstop_pressed(C_AXIS)))
     {
+      two_zero_home = true;
       BC_endstol_check = true;
       homeaxis(B_AXIS,false);
       BC_endstol_check = false;
@@ -266,6 +272,7 @@ void GcodeSuite::G28() {
       break;
     }
   }
+  two_zero_home = false;
   
   homeaxis(C_AXIS,false);
   set_axis_home(C_AXIS);

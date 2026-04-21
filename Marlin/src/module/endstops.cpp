@@ -461,7 +461,7 @@ void Endstops::not_homing() {
     if (trigger_state()) hit_on_purpose();
     else {
       //kill(GET_TEXT_F(MSG_KILL_HOMING_FAILED))
-      SERIAL_ECHOLNPGM("Během do_homing_move() se nestisknul endstop");
+      SERIAL_ECHOLNPGM("Missed endstop during do_homing_move()");
     };
   }
 #endif
