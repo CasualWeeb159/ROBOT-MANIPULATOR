@@ -92,7 +92,7 @@ FORCE_INLINE feedRate_t homing_feedrate(const AxisEnum a) {
   return MMM_TO_MMS(v);
 }
 
-feedRate_t get_homing_bump_feedrate(const AxisEnum axis);
+feedRate_t get_homing_bump_feedrate();
 
 /**
  * The default feedrate for many moves, set by the most recent move
@@ -309,7 +309,7 @@ void quickstop_stepper();
  * Set the planner/stepper positions directly from current_position with
  * no kinematic translation. Used for homing axes and cartesian/core syncing.
  */
-void sync_plan_position();
+void sync_plan_position(bool check_translation = true);
 
 #if HAS_EXTRUDERS
   void sync_plan_position_e();
@@ -319,7 +319,7 @@ void sync_plan_position();
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s);
+void line_to_current_position(const_feedRate_t fr_mm_s=feedrate_mm_s, bool move_to_delta = false);
 
 #if HAS_EXTRUDERS
   void unscaled_e_move(const_float_t length, const_feedRate_t fr_mm_s);
@@ -426,7 +426,11 @@ void set_axis_is_at_home(const AxisEnum axis);
    *   Cleared whenever a stepper powers off, potentially losing its position.
    */
   extern main_axes_bits_t axes_homed, axes_trusted;
-  void homeaxis(const AxisEnum axis);
+  bool endstop_pressed(const AxisEnum axis);
+  void set_axis_home(const AxisEnum axis);
+  void all_axis_unhomed();
+  bool is_axis_home_(const AxisEnum axis);
+  void homeaxis(const AxisEnum axis, bool final_home, bool B_C_homing = false);
   void set_axis_never_homed(const AxisEnum axis);
   main_axes_bits_t axes_should_home(main_axes_bits_t axes_mask=main_axes_mask);
   bool homing_needed_error(main_axes_bits_t axes_mask=main_axes_mask);

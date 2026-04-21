@@ -371,6 +371,7 @@ struct PlannerHints {
                                       // would calculate if it knew the as-yet-unbuffered path
   #endif
   bool movement_possibility_already_checked = false; // Flag to indicate that the planner has already checked the possibility of movement
+  bool move_to_delta = false;
 
   PlannerHints(const_float_t mm=0.0f) : millimeters(mm) {}
 };
@@ -822,7 +823,7 @@ class Planner {
     private:
 
       // Allow do_homing_move to access internal functions, such as buffer_segment.
-      friend void do_homing_move(const AxisEnum, const float, const feedRate_t, const bool);
+      friend void do_homing_move(const AxisEnum, const float, const feedRate_t, const bool, bool);
   #endif
 
     /**
@@ -878,7 +879,7 @@ class Planner {
      *
      * Clears previous speed values.
      */
-    static void set_position_mm(const xyze_pos_t &xyze);
+    static void set_position_mm(const xyze_pos_t &xyze, bool check_translation = true);
 
     #if HAS_EXTRUDERS
       static void set_e_position_mm(const_float_t e);

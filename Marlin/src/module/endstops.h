@@ -31,6 +31,9 @@
 #define __ES_ITEM(N) N,
 #define _ES_ITEM(K,N) TERN_(K,DEFER4(__ES_ITEM)(N))
 
+extern bool BC_endstol_check;
+extern bool final_home_move;
+
 enum EndstopEnum : char {
   // Common XYZ (ABC) endstops. Defined according to USE_[XYZ](MIN|MAX)_PLUG settings.
   _ES_ITEM(HAS_X_MIN, X_MIN)
@@ -131,6 +134,11 @@ class Endstops {
     static bool enabled, enabled_globally;
     static endstop_mask_t live_state;
     static volatile endstop_mask_t hit_state; // Use X_MIN, Y_MIN, Z_MIN and Z_MIN_PROBE as BIT index
+      // sledování změny endstopu
+    static endstop_mask_t old_live_state;
+    static endstop_mask_t endstop_changed;
+    static int endstop_poll_count;
+    
 
     #if ENDSTOP_NOISE_THRESHOLD
       static endstop_mask_t validated_live_state;
@@ -189,6 +197,29 @@ class Endstops {
       ;
     }
 
+    FORCE_INLINE static endstop_mask_t change_state() {
+
+    // Podmínka pro aktivaci dojezdu: platí pouze mimo finální homing, 
+    // pokud došlo ke změně stavu a nevypršel časový limit (500 cyklů).
+
+    if (!final_home_move && old_live_state != live_state && endstop_poll_count < 500) {
+        endstop_poll_count++; // Inkrementace čítače po dobu trvání dojezdu.
+        return 0;             // Během dojezdu se změna nehlásí a pohyb pokračuje.
+    }
+
+    // Reset čítače pro další cyklus detekce.
+    endstop_poll_count = 0;
+
+    // Výpočet změněných bitů pomocí bitové operace XOR.
+    endstop_changed = old_live_state ^ live_state;
+
+    // Aktualizace posledního známého stavu pro příští volání.
+    old_live_state = live_state;
+
+    // Vrácení masky se změněnými bity.
+    return endstop_changed;
+    }
+    
     static bool probe_switch_activated() {
       return (true
         #if ENABLED(PROBE_ACTIVATION_SWITCH)
@@ -218,7 +249,7 @@ class Endstops {
 
     #if ENABLED(VALIDATE_HOMING_ENDSTOPS)
       // If the last move failed to trigger an endstop, call kill
-      static void validate_homing_move();
+      static void validate_homing_move(const AxisEnum axis);
     #else
       FORCE_INLINE static void validate_homing_move() { hit_on_purpose(); }
     #endif
