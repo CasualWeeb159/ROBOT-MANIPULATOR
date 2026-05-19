@@ -389,7 +389,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         case 6: G6(); break;                                      // G6: Direct Stepper Move
       #endif
 
-      case 7: G7(); break;                                        // G7: Set Mist Coolant
+      case 7: G7(); break;                                        // G7: Kloubovy JOG (PTP)
+      case 8: G8(); break;  // G8: Kloubovy najezd (PTP)
+      case 9: G9(); break;  // G9: Polarni linearni najezd (LIN)
 
       #if ENABLED(FWRETRACT)
         case 10: G10(); break;                                    // G10: Retract / Swap Retract
@@ -514,6 +516,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         case 4: M3_M4(true ); break;                              // M4: Turn ON Laser | Spindle (counter-clockwise), set Power | Speed
         case 5: M5(); break;                                      // M5: Turn OFF Laser | Spindle
       #endif
+
+      case 6: M6(); break; // <--- NOVÁ REGISTRACE (ATC)
 
       #if ENABLED(COOLANT_MIST)
         case 7: M7(); break;                                      // M7: Coolant Mist ON
@@ -975,9 +979,12 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         case 665: M665(); break;                                  // M665: Set Kinematics parameters
       #endif
 
-      #if ENABLED(DELTA) || HAS_EXTRA_ENDSTOPS
-        case 666: M666(); break;                                  // M666: Set delta or multiple endstop adjustment
-      #endif
+      //#if ENABLED(DELTA) || HAS_EXTRA_ENDSTOPS
+        //case 666: M666(); break;                                  // M666: Set delta or multiple endstop adjustment
+      //#endif
+
+      case 666: M666(); break;
+      case 667: M667(); break;
 
       #if ENABLED(DUET_SMART_EFFECTOR) && PIN_EXISTS(SMART_EFFECTOR_MOD)
         case 672: M672(); break;                                  // M672: Set/clear Duet Smart Effector sensitivity

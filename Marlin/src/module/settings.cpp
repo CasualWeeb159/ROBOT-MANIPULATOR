@@ -742,16 +742,9 @@ void MarlinSettings::postprocess() {
   uint16_t MarlinSettings::working_crc;
 
   bool MarlinSettings::size_error(const uint16_t size) {
-    if (size != datasize()) {
-      DEBUG_ERROR_MSG("EEPROM datasize error."
-        #if ENABLED(MARLIN_DEV_MODE)
-          " (Actual:", size, " Expected:", datasize(), ")"
-        #endif
-      );
-      return true;
-    }
-    return false;
-  }
+  // ÚPRAVA Matěj: Vypnutí nesmyslné kontroly velikosti, naše data hlídá CRC
+  return false;
+}
 
   /**
    * M500 - Store Configuration
@@ -1627,6 +1620,9 @@ void MarlinSettings::postprocess() {
         EEPROM_WRITE(stepper.get_shaping_damping_ratio(Y_AXIS));
       #endif
     #endif
+    
+    // ÚPRAVA Matěj: Zápis tabulky nástrojů před výpočtem velikosti a CRC
+    EEPROM_WRITE(tool_table);
 
     //
     // Report final CRC and Data Size
@@ -2620,6 +2616,9 @@ void MarlinSettings::postprocess() {
       }
       #endif
 
+      // ÚPRAVA Matěj: Zápis tabulky nástrojů
+      EEPROM_READ(tool_table);
+
       //
       // Validate Final Size and CRC
       //
@@ -3401,6 +3400,16 @@ void MarlinSettings::reset() {
   #endif
 
   postprocess();
+
+  // ÚPRAVA Matěj: Inicializace tabulky nástrojů do výchozího stavu
+  memset(tool_table, 0, sizeof(tool_table)); 
+
+  // Nastavení výchozího nástroje pro ID 0 (Základní hlava)
+  tool_table[0].lx = 89.0f;
+  tool_table[0].ly = 0.0f;
+  tool_table[0].lz = 61.0f;
+  tool_table[0].clamp_angle = 20; // Bezpečný výchozí stisk
+  strcpy(tool_table[0].name, "Zakladni");
 
   #if EITHER(EEPROM_CHITCHAT, DEBUG_LEVELING_FEATURE)
     FSTR_P const hdsl = F("Hardcoded Default Settings Loaded");

@@ -1710,7 +1710,7 @@
 #define Y_MIN_POS -2000
 #define Z_MIN_POS 0
 #define X_MAX_POS X_BED_SIZE
-#define Y_MAX_POS X_BED_SIZE
+#define Y_MAX_POS Y_BED_SIZE
 #define Z_MAX_POS 2000
 //#define I_MIN_POS 0
 //#define I_MAX_POS 50
@@ -2184,7 +2184,7 @@
  *   M501 - Read settings from EEPROM. (i.e., Throw away unsaved changes)
  *   M502 - Revert settings to "factory" defaults. (Follow with M500 to init the EEPROM.)
  */
-//#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
+#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
 //#define DISABLE_M503        // Saves ~2700 bytes of flash. Disable for release!
 #define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save PROGMEM.
 #define EEPROM_BOOT_SILENT    // Keep M503 quiet and only give errors during first load

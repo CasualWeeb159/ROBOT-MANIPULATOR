@@ -348,6 +348,16 @@
 #define EXP2_07_PIN                         PC15
 #define EXP2_08_PIN                         -1
 
+#define TOOL_ID_BIT0_PIN   PE12  // Pin 5 na EXP1
+#define TOOL_ID_BIT1_PIN   PE13  // Pin 6 na EXP1
+#define TOOL_ID_BIT2_PIN   PE14  // Pin 7 na EXP1
+#define TOOL_ID_BIT3_PIN   PE15  // Pin 8 na EXP1
+
+// --- Piny pro senzory obsazenosti doku (DIAG3 - DIAG5) ---
+#define DOCK_0_SENSOR_PIN PG11
+#define DOCK_1_SENSOR_PIN PG12
+#define DOCK_2_SENSOR_PIN PG13
+
 //
 // Onboard SD card
 // Must use soft SPI because Marlin's default hardware SPI is tied to LCD's EXP2

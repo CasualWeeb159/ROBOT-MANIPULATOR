@@ -499,6 +499,11 @@ private:
   #endif
 
   static void G7();
+  static void M666();
+  static void G8();
+  static void G9();
+  static void M6(); // Automaticka vymena nastroje (ATC)
+  static void M667();
 
   #if ENABLED(FWRETRACT)
     static void G10();
