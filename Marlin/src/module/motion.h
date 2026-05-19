@@ -628,4 +628,12 @@ void home_if_needed(const bool keeplev=false);
   sensorless_t start_sensorless_homing_per_axis(const AxisEnum axis);
   void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_stealth);
 #endif
+
+struct ToolData {
+  float lx, ly, lz;
+  char name[16];
+  int clamp_angle; // <--- NOVÝ ŘÁDEK: Úhel utažení serva (0 - 180)
+};
+extern ToolData tool_table[16]; // Deklarace pro ostatní soubory
+
 void direct_angle_change(const abc_pos_t &angles);

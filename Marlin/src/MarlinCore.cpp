@@ -1365,6 +1365,19 @@ void setup() {
 
   SETUP_RUN(endstops.init());         // Init endstops and pullups
 
+  // ÚPRAVA Matěj: Inicializace pull-upů pro detekci ID nástroje
+  SET_INPUT_PULLUP(TOOL_ID_BIT0_PIN);
+  SET_INPUT_PULLUP(TOOL_ID_BIT1_PIN);
+  SET_INPUT_PULLUP(TOOL_ID_BIT2_PIN);
+  SET_INPUT_PULLUP(TOOL_ID_BIT3_PIN);
+
+  // ÚPRAVA Matěj: Zapnutí pull-up rezistorů pro doky
+  #if defined(DOCK_0_SENSOR_PIN)
+    SET_INPUT_PULLUP(DOCK_0_SENSOR_PIN);
+    SET_INPUT_PULLUP(DOCK_1_SENSOR_PIN);
+    SET_INPUT_PULLUP(DOCK_2_SENSOR_PIN);
+  #endif
+
   #if ENABLED(DELTA) && !HAS_SOFTWARE_ENDSTOPS
     SETUP_RUN(refresh_delta_clip_start_height()); // Init safe delta height without soft endstops
   #endif
