@@ -269,7 +269,8 @@
  *        Set Polargraph draw area and belt length: "M665 S<segments-per-second> L<draw-area-left> R<draw-area-right> T<draw-area-top> B<draw-area-bottom> H<max-belt-length>"
  * M666 - Set/get offsets for delta (Requires DELTA) or dual endstops. (Requires [XYZ]_DUAL_ENDSTOPS)
  * M672 - Set/Reset Duet Smart Effector's sensitivity. (Requires DUET_SMART_EFFECTOR and SMART_EFFECTOR_MOD_PIN)
- * M701 - Load filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
+ * M700 - Send a CAN message
+ * M701 - Receive a CAN message
  * M702 - Unload filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
  * M808 - Set or Goto a Repeat Marker (Requires GCODE_REPEAT_MARKERS)
  * M810-M819 - Define/execute a G-code macro (Requires GCODE_MACROS)
@@ -1119,6 +1120,11 @@ private:
 
   #if ENABLED(DUET_SMART_EFFECTOR) && PIN_EXISTS(SMART_EFFECTOR_MOD)
     static void M672();
+  #endif
+
+  #if ENABLED(USE_CANBUS)
+    static void M700();
+    static void M701();
   #endif
 
   #if ENABLED(FILAMENT_LOAD_UNLOAD_GCODES)

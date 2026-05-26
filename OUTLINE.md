@@ -15,6 +15,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
         - `gcode/` - Handles G-code parsing and execution.
             - `gcode.cpp`/`.h` - Core G-code processing.
             - `motion/` - G-code commands related to movement (e.g., `G0_G1.cpp`, `Custom_ATC.cpp`, `G2_G3.cpp`, `G7.cpp`, `G8_G9.cpp`, `M50_M51.cpp`).
+            - `can/` - G-code commands for CAN bus communication (e.g., `M700_M701.cpp`).
             - `calibrate/` - G-code commands for calibration (e.g., `G28.cpp`).
             - `control/` - G-code commands for various controls (e.g., `M42.cpp`, `M120_M121.cpp`).
             - `host/` - G-code commands for host communication (e.g., `M114.cpp`).
@@ -24,6 +25,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
             - `motion.cpp`/`.h` - High-level motion control and homing.
             - `planner.cpp`/`.h` - Motion planning and step generation.
             - `scara.cpp`/`.h` - SCARA kinematics implementation.
+            - `canbus.cpp`/`.h` - CAN bus communication handling.
             - `endstops.cpp`/`.h` - Endstop management.
             - `stepper.cpp`/`.h` - Low-level stepper motor control.
             - `temperature.cpp`/`.h` - Temperature management.
@@ -36,6 +38,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
 
 - **`Marlin/Configuration.h`**
     - **`MOTHERBOARD`**: `BOARD_BTT_OCTOPUS_PRO_V1_0` - A powerful 32-bit controller board.
+    - **`USE_CANBUS`**: Enabled to activate CAN bus functionality.
     - **Kinematics**: Currently utilizing/adapted from `MP_SCARA` to drive the 3-axis palletizing parallel linkage system. **It is crucial to note that while `MP_SCARA` is enabled as a structural workaround in the firmware, the physical robot is a 3-axis Palletizing robot with parallel linkages, not a standard SCARA.**
     - **`SCARA_LINKAGE_1`, `SCARA_LINKAGE_2`, `SCARA_LINKAGE_3`**: Defines physical dimensions of robot arms for accurate movement.
     - **Stepper Drivers & Motors**: Nema 34 (9Nm) motors driven by `CL86T` closed-loop external drivers (STEP/DIR interface).
@@ -66,6 +69,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
 - **`Marlin/src/MarlinCore.cpp`**
     - Contains the main `setup()` and `loop()` functions.
     - Initializes all hardware and continuously processes G-code commands and manages the robot's state.
+    - **CAN Bus Initialization**: Calls `canbus.setup_canbus()` to initialize the CAN hardware.
     - **Brake Control Pin Initialization**: `PE7` and `PE8` are configured as outputs and set to `HIGH` (likely disengaged state for electromagnetic brakes).
     - **Sensor Pull-up Initialization**: Pull-up resistors are enabled for `TOOL_ID_BIT0_PIN` to `TOOL_ID_BIT3_PIN` (POGO pins for tool ID) and `DOCK_0_SENSOR_PIN` to `DOCK_2_SENSOR_PIN` (dock presence sensors).
 
@@ -74,14 +78,31 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
     - Takes incoming G-code commands and calls appropriate functions for execution.
     - **`break_command_pending`**: A new global boolean variable (`bool break_command_pending = false;`) is introduced to manage the two-step `M50`/`M51` brake control process.
     - **`process_parsed_command` Modification**: Includes logic to check for `M50`, `M51`, `M105` and, if `break_command_pending` is true and another command is received, it cancels the pending `M50` action with a serial message "Příkaz M51 zrušen" (Command M51 canceled).
-    - **New G-code Cases**: Integrates handlers for `G7`, `G8`, `G9`, `M6`, `M50`, `M51`, `M666`, `M667`.
+    - **New G-code Cases**: Integrates handlers for `G7`, `G8`, `G9`, `M6`, `M50`, `M51`, `M666`, `M667`, `M700`, `M701`.
 
 - **`Marlin/src/gcode/gcode.h`**
-    - Declares the new G-code functions: `G7()`, `G8()`, `G9()`, `M6()`, `M50()`, `M51()`, `M666()`, `M667()`.
+    - Declares the new G-code functions: `G7()`, `G8()`, `G9()`, `M6()`, `M50()`, `M51()`, `M666()`, `M667()`, `M700()`, `M701()`.
     - `G7()` is commented as "Set robot angles alfa, beta, gamma dirrectly A B C".
     - `G60`/`G61` comments updated to reflect `SAVED_POSITIONS` requirement.
 
-### 3. Kinematics
+### 3. CAN Bus Communication
+
+- **`Marlin/src/module/canbus.h` (New File)**
+    - Defines the `CANBus` class, which encapsulates CAN communication logic.
+    - Declares methods for setup (`setup_canbus`), sending (`send_message`), and receiving (`receive_message`).
+
+- **`Marlin/src/module/canbus.cpp` (New File)**
+    - Implements the `CANBus` class methods.
+    - **`setup_canbus()`**: Initializes the STM32F4's CAN1 peripheral, configuring GPIO pins (PD0 for RX, PD1 for TX), setting the baud rate to 500 kbps, and establishing a filter to accept all incoming messages. It also sends a test message ("HELLOCAN") on startup.
+    - **`send_message()`**: Transmits a CAN message with a given ID and data payload.
+    - **`receive_message()`**: Checks for and retrieves a message from the CAN receive FIFO.
+
+- **`Marlin/src/gcode/can/M700_M701.cpp` (New File)**
+    - Implements the G-code interface for CAN bus communication.
+    - **`M700`**: Sends a CAN message. It takes an ID (`I` parameter) and a data payload as a hexadecimal string (`H` parameter).
+    - **`M701`**: Receives and prints a CAN message. If a message is available, it prints the message ID and its data payload formatted as hexadecimal bytes.
+
+### 4. Kinematics
 
 - **`Marlin/src/module/scara.h`**
     - Defines the SCARA kinematics and physical constraints (arm lengths, joint ranges).
@@ -99,7 +120,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
         - **Optional Parameters**: `is_only_a_question` and `already_checked` parameters allow for testing reachability without committing to a move.
         - **Brake Check**: Checks `extDigitalRead(71)` and `extDigitalRead(72)` (brake status) and sets `kinematic_calc_failiure` if brakes are not in automatic mode.
 
-### 4. Motion Control
+### 5. Motion Control
 
 - **`Marlin/src/module/motion.cpp`**
     - Contains high-level motion commands like `do_blocking_move_to()`.
@@ -139,7 +160,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
         - Executes the pending brake state change set by `M50` if `break_command_pending` is true.
         - Writes the `PE7_state` and `PE8_state` to the respective pins.
 
-### 5. Automatic Tool Changer (ATC)
+### 6. Automatic Tool Changer (ATC)
 
 - **`Marlin/src/gcode/motion/Custom_ATC.cpp`**
     - Custom file implementing ATC functionality using a Maxwell kinematic coupling.
@@ -159,7 +180,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
         - Handling ID mismatches as fatal errors.
     - **`M666` (Tool Library Management)**: Allows defining/updating tool properties (X, Y, Z offsets, clamp angle, name) and listing all stored tools.
 
-### 6. Kinematics & Homing Adjustments
+### 7. Kinematics & Homing Adjustments
 
 - **`Marlin/src/module/endstops.cpp`**
     - **New Member Variables**: `old_live_state`, `endstop_changed`, `endstop_poll_count` added to `Endstops` class for advanced endstop state tracking.
@@ -186,7 +207,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
         - **Final Homing**: Performs final homing for A, B, and C axes.
         - **Kinematic Update**: Calls `inverse_kinematics(current_position)` after homing to ensure the robot's Cartesian position is correctly calculated from the homed joint angles.
 
-### 7. Key G-Code Commands
+### 8. Key G-Code Commands
 
 - **`G0`/`G1`**: Linear Move.
     - **Function**: Most common G-code for all linear movements. Now integrates custom kinematic boundary checks.
@@ -248,3 +269,9 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
 - **`M667`**: Master ATC Command.
     - **Function**: Controls ATC calibration, auto-scanning, unloading, and diagnostics.
     - **File**: `Marlin/src/gcode/motion/Custom_ATC.cpp`
+- **`M700`**: Send CAN Message.
+    - **Function**: Sends a CAN message with a specified ID and a hexadecimal data payload.
+    - **File**: `Marlin/src/gcode/can/M700_M701.cpp`
+- **`M701`**: Receive CAN Message.
+    - **Function**: Polls for and prints a received CAN message, displaying the ID and data in hexadecimal format.
+    - **File**: `Marlin/src/gcode/can/M700_M701.cpp`
