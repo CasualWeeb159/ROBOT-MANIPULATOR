@@ -23,24 +23,35 @@ void CANBus::setup_canbus() {
   __HAL_RCC_CAN1_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE(); // Enable GPIOD for PD0 and PD1
 
-  // CAN_RX = PD0, CAN_TX = PD1
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+  // CAN_TX = PD1 (Push-Pull, No Pull)
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  // CAN_RX = PD0 (Push-Pull hardware overridden to Input, Add Pull-Up)
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP; // <-- Added Pull-Up for stability
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 60; // Adjusted for 50 kbps over poor physical layer
-  hcan1.Init.Mode = CAN_MODE_LOOPBACK;
+  hcan1.Init.Prescaler = 15;
+  hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
+
+  // <-- CRITICAL CHANGE: Stop infinite retries on missing ACK
   hcan1.Init.AutoRetransmission = DISABLE;
+
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK) {
@@ -48,6 +59,7 @@ void CANBus::setup_canbus() {
     return;
   }
 
+  // (Filter setup remains the same, it correctly lets everything through)
   CAN_FilterTypeDef sFilterConfig;
   sFilterConfig.FilterBank = 0;
   sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -69,12 +81,6 @@ void CANBus::setup_canbus() {
     SERIAL_ECHOLN("CAN Start Failed");
     return;
   }
-
-  SERIAL_ECHOLN("CAN Initialized on PD0/PD1");
-
-  // Test message
-  uint8_t test_data[8] = {'H', 'E', 'L', 'L', 'O', 'C', 'A', 'N'};
-  send_message(0x123, test_data, 8);
 }
 
 void CANBus::send_message(uint32_t id, uint8_t* data, uint8_t len) {
