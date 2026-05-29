@@ -42,9 +42,13 @@ void CANBus::setup_canbus() {
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 15;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
+
+  // Zvýšení tolerance pro resynchronizaci hodin mezi dvěma čipy (z 1TQ na 2TQ)
+  hcan1.Init.SyncJumpWidth = CAN_SJW_2TQ;
+
+  // Posun bodu vzorkování (Sample Point) na ~73 % ( 1 + 10 = 11; 11 / 15 = 73,3% )
+  hcan1.Init.TimeSeg1 = CAN_BS1_10TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;

@@ -20,7 +20,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
             - `control/` - G-code commands for various controls (e.g., `M42.cpp`, `M120_M121.cpp`).
             - `host/` - G-code commands for host communication (e.g., `M114.cpp`).
             - `config/` - G-code commands for configuration (e.g., `M43.cpp`).
-            - `feature/` - Implementations of various features (e.g., `pause/G60.cpp`, `pause/G61.cpp`).
+            - `feature/` - Implementations of various features (e.g., `pause/G60.cpp`, `pause/G61.cpp`, `input_shaping/M593.cpp`, `input_shaping/M594.cpp`).
         - `module/` - Contains modular components for different hardware and software functionalities.
             - `motion.cpp`/`.h` - High-level motion control and homing.
             - `planner.cpp`/`.h` - Motion planning and step generation.
@@ -51,6 +51,7 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
     - **`EEPROM_SETTINGS`**: Enabled, allowing settings to be saved to the board's memory.
 
 - **`Marlin/Configuration_adv.h`**
+    - **`INPUT_SHAPING`**: Enabled to allow for vibration cancellation.
     - **`SAVED_POSITIONS`**: Increased to `10`, allowing more positions to be saved and recalled with `G60`/`G61`.
     - **`CNC_COORDINATE_SYSTEMS`**: Enabled, supporting G53 and G54-G59.3 commands for selecting coordinate systems.
     - **`DIRECT_PIN_CONTROL`**: Enabled, allowing direct control of pin states using `M42`.
@@ -78,10 +79,10 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
     - Takes incoming G-code commands and calls appropriate functions for execution.
     - **`break_command_pending`**: A new global boolean variable (`bool break_command_pending = false;`) is introduced to manage the two-step `M50`/`M51` brake control process.
     - **`process_parsed_command` Modification**: Includes logic to check for `M50`, `M51`, `M105` and, if `break_command_pending` is true and another command is received, it cancels the pending `M50` action with a serial message "Příkaz M51 zrušen" (Command M51 canceled).
-    - **New G-code Cases**: Integrates handlers for `G7`, `G8`, `G9`, `M6`, `M50`, `M51`, `M666`, `M667`, `M700`, `M701`.
+    - **New G-code Cases**: Integrates handlers for `G7`, `G8`, `G9`, `M6`, `M50`, `M51`, `M593`, `M594`, `M666`, `M667`, `M700`, `M701`.
 
 - **`Marlin/src/gcode/gcode.h`**
-    - Declares the new G-code functions: `G7()`, `G8()`, `G9()`, `M6()`, `M50()`, `M51()`, `M666()`, `M667()`, `M700()`, `M701()`.
+    - Declares the new G-code functions: `G7()`, `G8()`, `G9()`, `M6()`, `M50()`, `M51()`, `M593()`, `M594()`, `M666()`, `M667()`, `M700()`, `M701()`.
     - `G7()` is commented as "Set robot angles alfa, beta, gamma dirrectly A B C".
     - `G60`/`G61` comments updated to reflect `SAVED_POSITIONS` requirement.
 
@@ -134,13 +135,17 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
     - Takes target positions from `motion.cpp` and generates step pulses for stepper motors.
     - Responsible for acceleration and deceleration for smooth and accurate movement.
 
+- **`Marlin/src/module/stepper.cpp`**
+    - **Input Shaping Implementation**: The low-level stepper ISR (`Stepper::isr`) contains the core logic for Input Shaping. It intercepts step requests for each axis (X and Y) and applies the ZV (Zero Vibration) shaping algorithm.
+    - **How it Works**: Instead of a single step pulse, the shaper splits the impulse into two parts, separated by a delay calculated from the resonant frequency (`M593 F...`). The magnitude of these two impulses is determined by the damping ratio (`M593 D...`). This is achieved using a "secondary Bresenham" error accumulator (`shaping_x.delta_error`) which translates the fractional, time-delayed impulses into whole, physical step pulses. This entire process is independent of the robot's kinematics, as it operates on the final Cartesian step commands.
+
 - **`Marlin/src/gcode/motion/G2_G3.cpp`**
     - **Arc Movement Safety**: Modified `plan_arc()` function now incorporates `inverse_kinematics(raw, true)` and checks `kinematic_calc_failiure` to ensure arc movements respect the custom kinematic boundaries.
 
 - **`Marlin/src/gcode/motion/G7.cpp` (New File)**
     - Implements the `G7` G-code command.
     - **Function**: "Kloubovy JOG (PTP)" (Joint JOG (Point-to-Point)). Allows direct control of robot's individual axes (A, B, C) in its native coordinate system.
-    - **Details**: Reads `A`, `B`, `C` parameters, applies A-axis inversion (`* -1.0f`), handles relative/absolute modes, and calls `direct_angle_change()` to execute the move.
+    - **Details**: Reads `A`, `B`, `C` parameters, applies A-axis inversion (`* -1.0f`), handles relative/absolute modes, and calls `direct_angle_change()` to execute the move. **Note: Input Shaping is NOT applied to `G7` moves.**
 
 - **`Marlin/src/gcode/motion/G8_G9.cpp` (New File)**
     - Implements `G8` and `G9` G-code commands.
@@ -263,6 +268,12 @@ The core of the ROBOT-MANIPULATOR firmware resides within the `Marlin/` director
 - **`M121`**: Disable Endstops.
     - **Function**: Disables the endstops.
     - **File**: `Marlin/src/gcode/control/M120_M121.cpp`
+- **`M593`**: Input Shaping.
+    - **Function**: Sets the frequency (`F`) and damping ratio (`D`) for the Input Shaping algorithm to cancel vibrations on the X and Y axes.
+    - **File**: `Marlin/src/gcode/feature/input_shaping/M593.cpp`
+- **`M594`**: Frequency Sweep.
+    - **Function**: Frequency Sweep to determine resonant frequencies.
+    - **File**: `Marlin/src/gcode/feature/input_shaping/M594.cpp`
 - **`M666`**: Tool Library Management.
     - **Function**: Defines or lists tool properties (offsets, clamp angle, name).
     - **File**: `Marlin/src/gcode/motion/Custom_ATC.cpp`
