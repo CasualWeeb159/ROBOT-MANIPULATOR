@@ -2241,8 +2241,10 @@ bool Planner::_populate_block(
   ));
 
   // Bail if this is a zero-length block
-  if (block->step_event_count < MIN_STEPS_PER_SEGMENT) return false;
-
+  if (block->step_event_count < MIN_STEPS_PER_SEGMENT) {
+      SERIAL_ECHOLN("Bail");
+      return false;
+  }
   TERN_(MIXING_EXTRUDER, mixer.populate_block(block->b_color));
 
   #if HAS_FAN
