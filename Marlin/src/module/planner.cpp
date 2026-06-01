@@ -74,6 +74,8 @@
 
 #include "../MarlinCore.h"
 
+static bool small_move_alerted = false;
+
 #if HAS_LEVELING
   #include "../feature/bedlevel/bedlevel.h"
 #endif
@@ -2242,7 +2244,6 @@ bool Planner::_populate_block(
 
   // Bail if this is a zero-length block
   if (block->step_event_count < MIN_STEPS_PER_SEGMENT) {
-    static bool small_move_alerted = false;
     if (!small_move_alerted) {
       SERIAL_ECHOLNPGM("Warning: Small movement rejected by planner. Further messages will be suppressed.");
       small_move_alerted = true;
@@ -3108,7 +3109,6 @@ bool Planner::buffer_segment(const abce_pos_t &abce
       SERIAL_CHAR(')');
     #endif
     #if HAS_EXTRUDERS
-      SERIAL_ECHOPGM_P(SP_E_LBL, abce.e);
       SERIAL_ECHOLNPGM(" (", position.e, "->", target.e, ")");
     #else
       SERIAL_EOL();
@@ -3476,3 +3476,7 @@ void Planner::set_max_feedrate(const AxisEnum axis, float inMaxFeedrateMMS) {
   }
 
 #endif
+
+void Planner::reset_small_move_alert() {
+  small_move_alerted = false;
+}
